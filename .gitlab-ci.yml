@@ -4,7 +4,7 @@
 #   VERCEL_TOKEN          — Vercel account token (Account Settings → Tokens)
 #   VERCEL_ORG_ID         — Team/user ID from .vercel/project.json after `vercel link`
 #   VERCEL_PROJECT_ID     — Project ID from .vercel/project.json after `vercel link`
-#   APP_URL               — production URL, e.g. https://gym-gestion.vercel.app (for GitLab environment link)
+#   APP_URL               — production URL, e.g. https://gym-gestion-nine.vercel.app (for GitLab environment link)
 #   PRODUCTION_DATABASE_URL — (optional) same as Vercel DATABASE_URL; for manual db:seed:production job
 #
 # Set these in the Vercel project dashboard (Settings → Environment Variables):
