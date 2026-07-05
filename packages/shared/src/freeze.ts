@@ -1,12 +1,5 @@
 import { addDays, differenceInCalendarDays, startOfDay } from "date-fns";
-
-export const MemberStatus = {
-  ACTIVE: "ACTIVE",
-  EXPIRED: "EXPIRED",
-  FROZEN: "FROZEN",
-} as const;
-
-export type MemberStatusValue = (typeof MemberStatus)[keyof typeof MemberStatus];
+import { MemberStatus } from "./auth";
 
 export function isMemberFrozen(status: string): boolean {
   return status === MemberStatus.FROZEN;
