@@ -1,0 +1,30 @@
+{
+  "name": "@gym/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./validations": "./src/validations.ts",
+    "./auth": "./src/auth.ts",
+    "./subscription": "./src/subscription.ts",
+    "./member-qr": "./src/member-qr.ts",
+    "./member-auth": "./src/member-auth.ts",
+    "./i18n": "./src/i18n.ts",
+    "./format": "./src/format.ts",
+    "./dashboard-actions": "./src/dashboard-actions.ts",
+    "./dashboard-trends": "./src/dashboard-trends.ts",
+    "./freeze": "./src/freeze.ts",
+    "./peak-hours": "./src/peak-hours.ts"
+  },
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "typescript": "^5"
+  }
+}

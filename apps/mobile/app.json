@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Gym Gestion",
+    "slug": "gym-gestion",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "gymgestion",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gymgestion.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Gym Gestion utilise la caméra pour scanner les codes QR des membres lors du check-in.",
+        "NSPhotoLibraryAddUsageDescription": "Enregistrer la carte membre dans vos photos."
+      }
+    },
+    "android": {
+      "package": "com.gymgestion.app",
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#1a1a2e",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png"
+      },
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1a1a2e"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Gym Gestion utilise la caméra pour scanner les codes QR des membres lors du check-in."
+        }
+      ],
+      "expo-secure-store",
+      "expo-font"
+    ],
+    "experiments": {},
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}
