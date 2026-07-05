@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum MemberStatus {
+  ACTIVE
+  EXPIRED
+  FROZEN
+}
+
+enum PaymentMethod {
+  CASH
+  D17
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+enum MemberInviteStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+}
+
+model Gym {
+  id        String    @id @default(cuid())
+  name      String
+  location  String?
+  cardTheme String?
+  createdAt DateTime  @default(now())
+  users     User[]
+  members   Member[]
+  checkins  Checkin[]
+  payments  Payment[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  gymId        String
+  gym          Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  passwordHash String
+  role         Role      @default(STAFF)
+  createdAt    DateTime  @default(now())
+  payments     Payment[]
+
+  @@unique([gymId, email])
+  @@index([email])
+}
+
+model Member {
+  id                String              @id @default(cuid())
+  gymId             String
+  gym               Gym                 @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  fullName          String
+  phone             String
+  email             String?
+  passwordHash      String?
+  inviteToken       String?             @unique
+  inviteExpiresAt   DateTime?
+  inviteStatus      MemberInviteStatus?
+  lastLoginAt       DateTime?
+  emailVerifiedAt   DateTime?
+  subscriptionStart DateTime
+  subscriptionEnd   DateTime
+  status            MemberStatus        @default(ACTIVE)
+  frozenAt          DateTime?
+  frozenUntil       DateTime?
+  notes             String?
+  monthlyFee        Decimal             @default(0) @db.Decimal(10, 2)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  checkins          Checkin[]
+  payments          Payment[]
+
+  @@unique([gymId, phone])
+  @@unique([gymId, email])
+  @@index([gymId, status])
+  @@index([gymId, fullName])
+  @@index([gymId, subscriptionEnd])
+  @@index([email])
+}
+
+model Checkin {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  timestamp DateTime @default(now())
+
+  @@index([gymId, timestamp])
+  @@index([memberId, timestamp])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  gymId        String
+  gym          Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  memberId     String
+  member       Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount       Decimal       @db.Decimal(10, 2)
+  method       PaymentMethod
+  paidAt       DateTime
+  note         String?
+  recordedById String
+  recordedBy   User          @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime      @default(now())
+
+  @@index([gymId, paidAt])
+  @@index([memberId, paidAt])
+  @@index([recordedById])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String?
+  memberId  String?
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@index([memberId])
+}

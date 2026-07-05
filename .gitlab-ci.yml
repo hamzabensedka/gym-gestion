@@ -1,0 +1,107 @@
+# GitLab CI — validate on MRs / main, deploy web app to Vercel on main.
+#
+# Required GitLab CI/CD variables (Settings → CI/CD → Variables):
+#   VERCEL_TOKEN          — Vercel account token (Account Settings → Tokens)
+#   VERCEL_ORG_ID         — Team/user ID from .vercel/project.json after `vercel link`
+#   VERCEL_PROJECT_ID     — Project ID from .vercel/project.json after `vercel link`
+#   APP_URL               — production URL, e.g. https://gym-gestion.vercel.app (for GitLab environment link)
+#   PRODUCTION_DATABASE_URL — (optional) same as Vercel DATABASE_URL; for manual db:seed:production job
+#
+# Set these in the Vercel project dashboard (Settings → Environment Variables):
+#   DATABASE_URL            — PostgreSQL (Neon, Supabase, Railway, Vercel Postgres, …)
+#   SESSION_SECRET          — ≥ 32 chars (openssl rand -base64 32)
+#   MEMBER_SESSION_SECRET   — ≥ 32 chars
+#   APP_URL                 — https://your-app.vercel.app (production URL)
+#   RESEND_API_KEY          — optional; member invite emails
+#   EMAIL_FROM              — optional; e.g. FitClub <noreply@yourdomain.com>
+#   INVITE_TTL_HOURS        — optional; default 72
+#
+# First deploy: schema is applied with `prisma db push` (see README); demo data via manual db:seed:production job.
+
+stages:
+  - validate
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  # Placeholders so `next build` can compile without a real DB in CI validate jobs
+  DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/gym_gestion?schema=public"
+  SESSION_SECRET: "ci-placeholder-session-secret-32chars-min"
+  MEMBER_SESSION_SECRET: "ci-placeholder-member-secret-32chars-min"
+  APP_URL: "http://localhost:3000"
+
+default:
+  image: node:${NODE_VERSION}-bookworm
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
+.install:
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq openssl ca-certificates > /dev/null
+    - npm ci --cache .npm --prefer-offline
+
+validate:unit:
+  extends: .install
+  stage: validate
+  script:
+    - npm run test:unit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+validate:build:
+  extends: .install
+  stage: validate
+  script:
+    - npm run build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy:vercel:preview:
+  extends: .install
+  stage: deploy
+  script:
+    - npm install -g vercel@latest
+    - vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+    - vercel build --token="$VERCEL_TOKEN"
+    - vercel deploy --prebuilt --token="$VERCEL_TOKEN" > deploy-url.txt
+    - echo "Preview URL:" && cat deploy-url.txt
+  artifacts:
+    paths:
+      - deploy-url.txt
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+deploy:vercel:production:
+  extends: .install
+  stage: deploy
+  script:
+    - npm install -g vercel@latest
+    - vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+    - vercel build --prod --token="$VERCEL_TOKEN"
+    - vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+  environment:
+    name: production
+    url: $APP_URL
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Run once after first production deploy to create demo admin/staff accounts.
+db:seed:production:
+  extends: .install
+  stage: deploy
+  script:
+    - npx prisma migrate deploy
+    - npm run db:seed
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  variables:
+    DATABASE_URL: $PRODUCTION_DATABASE_URL
