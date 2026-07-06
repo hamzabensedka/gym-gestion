@@ -288,6 +288,9 @@ const fr = {
     "Gym Gestion utilise la caméra pour scanner les QR codes de check-in des membres. Aucune photo n'est enregistrée.",
   "scan.cameraDenied":
     "Accès caméra refusé. Autorisez la caméra dans les réglages de votre appareil pour scanner les QR codes.",
+  "scan.cameraUnavailable":
+    "Aucune caméra disponible. Vérifiez qu'une caméra est connectée et autorisée dans le navigateur.",
+  "scan.retryCamera": "Réessayer la caméra",
   "scan.networkError": "Erreur réseau, réessayez",
   "scan.welcome": "Bonne séance",
   "scan.expiredMsg": "Abonnement expiré",
@@ -624,6 +627,9 @@ const ar = {
     "يستخدم Gym Gestion الكاميرا لمسح رموز QR لتسجيل دخول الأعضاء. لا يتم حفظ أي صورة.",
   "scan.cameraDenied":
     "تم رفض الوصول للكاميرا. فعّل الكاميرا من إعدادات جهازك لمسح رموز QR.",
+  "scan.cameraUnavailable":
+    "لا توجد كاميرا متاحة. تحقق من توصيل الكاميرا والسماح بها في المتصفح.",
+  "scan.retryCamera": "إعادة محاولة الكاميرا",
   "scan.networkError": "خطأ في الشبكة، حاول مجدداً",
   "scan.welcome": "تمرين موفّق",
   "scan.expiredMsg": "الاشتراك منتهي",
