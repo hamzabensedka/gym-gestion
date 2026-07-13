@@ -23,7 +23,7 @@ test.describe("Dashboard & attendance", () => {
   test("dashboard loads with stats", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Tableau de bord");
-    await expect(page.getByRole("complementary").getByText("FitClub Tunis")).toBeVisible();
+    await expect(page.getByRole("complementary").getByText("FitBox Mahdia")).toBeVisible();
   });
 
   test("attendance page loads", async ({ page }) => {

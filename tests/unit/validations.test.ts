@@ -68,7 +68,7 @@ describe("validations", () => {
 
   it("accepts gym settings payload", () => {
     const result = gymSchema.safeParse({
-      name: "FitClub",
+      name: "FitBox Mahdia",
       location: "Tunis",
       cardTheme: "default",
     });

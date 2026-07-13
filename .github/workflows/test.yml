@@ -29,7 +29,7 @@ jobs:
       MEMBER_SESSION_SECRET: test-member-session-secret-min-32-chars!!
       APP_URL: http://localhost:3000
       RESEND_API_KEY: ""
-      EMAIL_FROM: "FitClub <noreply@test.local>"
+      EMAIL_FROM: "FitBox <noreply@test.local>"
       INVITE_TTL_HOURS: 72
 
     steps:
@@ -71,7 +71,7 @@ jobs:
       MEMBER_SESSION_SECRET: test-member-session-secret-min-32-chars!!
       APP_URL: http://localhost:3000
       RESEND_API_KEY: ""
-      EMAIL_FROM: "FitClub <noreply@test.local>"
+      EMAIL_FROM: "FitBox <noreply@test.local>"
       INVITE_TTL_HOURS: 72
       CI: true
       NEXT_PUBLIC_E2E_TEST: "true"

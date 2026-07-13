@@ -43,18 +43,29 @@ if (-not $ProductionDatabaseUrl) {
 function Set-GitLabVariable {
   param([string]$Key, [string]$Value, [switch]$Masked, [switch]$Protected)
   if (-not $Value) { return }
-  $body = @{
-    key = $Key
-    value = $Value
-    masked = [bool]$Masked
-    protected = [bool]$Protected
+  $exists = $false
+  try {
+    $null = Invoke-RestMethod -Uri "https://gitlab.com/api/v4/projects/$projectId/variables/$Key" -Headers $headers
+    $exists = $true
+  } catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
   }
-  $existing = Invoke-RestMethod -Uri "https://gitlab.com/api/v4/projects/$projectId/variables/$Key" -Headers $headers -ErrorAction SilentlyContinue
-  if ($existing) {
-    Invoke-RestMethod -Method Put -Uri "https://gitlab.com/api/v4/projects/$projectId/variables/$Key" -Headers $headers -Body $body | Out-Null
+  if ($exists) {
+    $body = @{
+      value = $Value
+      masked = [bool]$Masked
+      protected = [bool]$Protected
+    } | ConvertTo-Json
+    Invoke-RestMethod -Method Put -Uri "https://gitlab.com/api/v4/projects/$projectId/variables/$Key" -Headers $headers -Body $body -ContentType "application/json" | Out-Null
     Write-Host "Updated $Key"
   } else {
-    Invoke-RestMethod -Method Post -Uri "https://gitlab.com/api/v4/projects/$projectId/variables" -Headers $headers -Body $body | Out-Null
+    $body = @{
+      key = $Key
+      value = $Value
+      masked = [bool]$Masked
+      protected = [bool]$Protected
+    } | ConvertTo-Json
+    Invoke-RestMethod -Method Post -Uri "https://gitlab.com/api/v4/projects/$projectId/variables" -Headers $headers -Body $body -ContentType "application/json" | Out-Null
     Write-Host "Created $Key"
   }
 }
@@ -63,6 +74,6 @@ Set-GitLabVariable -Key "VERCEL_TOKEN" -Value $VercelToken -Masked -Protected
 Set-GitLabVariable -Key "VERCEL_ORG_ID" -Value $VercelOrgId -Protected
 Set-GitLabVariable -Key "VERCEL_PROJECT_ID" -Value $VercelProjectId -Protected
 Set-GitLabVariable -Key "APP_URL" -Value $AppUrl -Protected
-Set-GitLabVariable -Key "PRODUCTION_DATABASE_URL" -Value $ProductionDatabaseUrl -Masked -Protected
+Set-GitLabVariable -Key "PRODUCTION_DATABASE_URL" -Value $ProductionDatabaseUrl -Protected
 
 Write-Host "Done. Push to main or run a pipeline to deploy."

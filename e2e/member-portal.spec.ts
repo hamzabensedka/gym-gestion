@@ -5,7 +5,7 @@ test.describe("Member portal", () => {
     await page.goto("/member");
     await expect(page).toHaveURL(/\/member/);
     await expect(page.getByText("Ahmed Ben Ali")).toBeVisible();
-    await expect(page.getByText("FitClub Tunis")).toBeVisible();
+    await expect(page.getByText("FitBox Mahdia")).toBeVisible();
   });
 
   test("navigates to QR card page", async ({ page }) => {

@@ -28,14 +28,14 @@ describe("sendMemberInviteEmail", () => {
   it("captures invite details in dev mode when Resend is not configured", async () => {
     const result = await sendMemberInviteEmail({
       to: "member@test.local",
-      gymName: "FitClub Tunis",
+      gymName: "FitBox Mahdia",
       token: "abc123token",
     });
 
     expect(result).toEqual({ ok: true, dev: true });
     expect(getLastDevInviteEmail()).toEqual({
       to: "member@test.local",
-      gymName: "FitClub Tunis",
+      gymName: "FitBox Mahdia",
       token: "abc123token",
       inviteUrl: "http://localhost:3001/member/invite/abc123token",
     });

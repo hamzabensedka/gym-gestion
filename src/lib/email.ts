@@ -14,7 +14,7 @@ function getAppUrl() {
 }
 
 function getFromAddress() {
-  return process.env.EMAIL_FROM ?? "FitClub <noreply@fitclub.local>";
+  return process.env.EMAIL_FROM ?? "FitBox <noreply@fitbox.local>";
 }
 
 export type SentInviteEmail = {
