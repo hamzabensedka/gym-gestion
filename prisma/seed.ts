@@ -43,7 +43,11 @@ async function main() {
   await prisma.gym.deleteMany();
 
   const gym = await prisma.gym.create({
-    data: { name: "FitClub Tunis", location: "Tunis, Tunisie" },
+    data: {
+      name: "FitBox Mahdia",
+      location: "Mahdia, Tunisie",
+      cardTheme: "fitbox-mahdia",
+    },
   });
 
   const adminPassword = await bcrypt.hash("admin123", 10);

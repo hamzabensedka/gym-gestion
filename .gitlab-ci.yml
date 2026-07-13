@@ -13,7 +13,7 @@
 #   MEMBER_SESSION_SECRET   — ≥ 32 chars
 #   APP_URL                 — https://your-app.vercel.app (production URL)
 #   RESEND_API_KEY          — optional; member invite emails
-#   EMAIL_FROM              — optional; e.g. FitClub <noreply@yourdomain.com>
+#   EMAIL_FROM              — optional; e.g. FitBox <noreply@yourdomain.com>
 #   INVITE_TTL_HOURS        — optional; default 72
 #
 # First deploy: schema is applied with `prisma db push` (see README); demo data via manual db:seed:production job.
