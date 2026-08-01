@@ -17,6 +17,7 @@ export const memberSchema = z.object({
   subscriptionEnd: z.string().min(1, "Date de fin requise"),
   notes: z.string().optional(),
   monthlyFee: z.coerce.number().min(0, "Montant invalide"),
+  badgeNumber: z.string().optional().or(z.literal("")),
 });
 
 export const memberInviteSchema = z.object({

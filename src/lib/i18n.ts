@@ -74,8 +74,11 @@ const fr = {
   "form.plan12": "12 mois",
   "form.create": "Créer le membre",
   "form.phoneExists": "Ce numéro de téléphone est déjà utilisé",
+  "form.badgeNumber": "N° de badge",
+  "form.badgeExists": "Ce numéro de badge est déjà utilisé",
 
   "detail.renew": "Renouveler l'abonnement",
+  "detail.badgeNumber": "N° de badge",
   "detail.renewDone": "Abonnement renouvelé",
   "detail.deleteMember": "Supprimer le membre",
   "detail.confirmDeleteBody": "Supprimer {name} ? Cette action est irréversible.",
@@ -446,8 +449,11 @@ const ar = {
   "form.plan12": "12 شهراً",
   "form.create": "إنشاء العضو",
   "form.phoneExists": "رقم الهاتف مستخدم مسبقاً",
+  "form.badgeNumber": "رقم الشارة",
+  "form.badgeExists": "رقم الشارة مستخدم مسبقاً",
 
   "detail.renew": "تجديد الاشتراك",
+  "detail.badgeNumber": "رقم الشارة",
   "detail.renewDone": "تم تجديد الاشتراك",
   "detail.deleteMember": "حذف العضو",
   "detail.confirmDeleteBody": "حذف {name}؟ لا يمكن التراجع عن هذا الإجراء.",

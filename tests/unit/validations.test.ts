@@ -36,6 +36,18 @@ describe("validations", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts optional badgeNumber on member form", () => {
+    const result = memberSchema.safeParse({
+      fullName: "Test Member",
+      phone: "+21620123456",
+      subscriptionStart: "2026-01-01",
+      subscriptionEnd: "2026-02-01",
+      monthlyFee: 80,
+      badgeNumber: "1001",
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects member form with short phone", () => {
     const result = memberSchema.safeParse({
       fullName: "Test",

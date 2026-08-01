@@ -32,6 +32,8 @@ import { getSession } from "@/lib/session";
 import { canAccessDesk, canAccessAdmin } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { createTranslator } from "@/lib/i18n";
+import { getGymBilling } from "@/lib/gym-features";
+import { planHasFeature } from "@/lib/plans";
 
 export default async function MemberDetailPage({
   params,
@@ -65,6 +67,9 @@ export default async function MemberDetailPage({
   if (!member) {
     notFound();
   }
+
+  const gymBilling = await getGymBilling(session.gymId);
+  const showBadgeField = planHasFeature(gymBilling.plan, "badge_numbers");
 
   const monthCheckins = await prisma.checkin.count({
     where: { memberId: member.id, timestamp: { gte: startOfMonth(new Date()) } },
@@ -113,6 +118,12 @@ export default async function MemberDetailPage({
               <Phone className="size-3.5" />
               {member.phone}
             </p>
+            {showBadgeField && member.badgeNumber ? (
+              <p className="tnum mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Hash className="size-3.5" />
+                {t("detail.badgeNumber")}: {member.badgeNumber}
+              </p>
+            ) : null}
             <div className="mt-2 mb-3 flex flex-wrap gap-2">
               {frozen ? (
                 <Badge tone="danger" dot>
@@ -274,6 +285,7 @@ export default async function MemberDetailPage({
         <MemberForm
           action={updateAction}
           mode="edit"
+          showBadgeField={showBadgeField}
           defaultValues={{
             fullName: member.fullName,
             phone: member.phone,
@@ -283,6 +295,7 @@ export default async function MemberDetailPage({
             notes: member.notes,
             monthlyFee: Number(member.monthlyFee),
             inviteStatus: member.inviteStatus,
+            badgeNumber: member.badgeNumber,
           }}
         />
       </Card>

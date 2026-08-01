@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { MemberInviteStatus } from "@prisma/client";
+import { MemberInviteStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getMemberStatus } from "@/lib/auth";
 import { normalizePhone } from "@/lib/format";
@@ -12,6 +12,8 @@ import { issueMemberInvite } from "@/lib/member-invite";
 import { requireSession } from "@/lib/session";
 import { canAccessAdmin, canAccessDesk } from "@/lib/auth";
 import { memberSchema } from "@/lib/validations";
+import { getGymBilling } from "@/lib/gym-features";
+import { planHasFeature } from "@/lib/plans";
 
 function parseDate(value: string) {
   return new Date(`${value}T12:00:00`);
@@ -20,6 +22,29 @@ function parseDate(value: string) {
 function normalizeEmail(value?: string) {
   const trimmed = value?.trim();
   return trimmed ? trimmed.toLowerCase() : null;
+}
+
+function normalizeBadgeNumber(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function uniqueConflictError(error: unknown): "form.badgeExists" | "form.phoneExists" {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    const target = error.meta?.target;
+    const fields = Array.isArray(target)
+      ? target.map(String)
+      : typeof target === "string"
+        ? [target]
+        : [];
+    if (fields.some((f) => f.includes("badgeNumber"))) {
+      return "form.badgeExists";
+    }
+  }
+  return "form.phoneExists";
 }
 
 export async function createMemberAction(formData: FormData) {
@@ -34,11 +59,16 @@ export async function createMemberAction(formData: FormData) {
     subscriptionEnd: formData.get("subscriptionEnd"),
     notes: formData.get("notes") || undefined,
     monthlyFee: formData.get("monthlyFee"),
+    badgeNumber: formData.get("badgeNumber") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
+
+  const gym = await getGymBilling(session.gymId);
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
+  const badgeNumber = canBadge ? normalizeBadgeNumber(parsed.data.badgeNumber) : null;
 
   const subscriptionEnd = parseDate(parsed.data.subscriptionEnd);
   const email = normalizeEmail(parsed.data.email);
@@ -57,13 +87,14 @@ export async function createMemberAction(formData: FormData) {
         status: getMemberStatus(subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        badgeNumber: canBadge ? badgeNumber : null,
         inviteStatus: email && sendInvite ? MemberInviteStatus.PENDING : null,
       },
       select: { id: true },
     });
     newId = created.id;
-  } catch {
-    return { error: "form.phoneExists" };
+  } catch (error) {
+    return { error: uniqueConflictError(error) };
   }
 
   if (email && sendInvite) {
@@ -90,11 +121,15 @@ export async function updateMemberAction(memberId: string, formData: FormData) {
     subscriptionEnd: formData.get("subscriptionEnd"),
     notes: formData.get("notes") || undefined,
     monthlyFee: formData.get("monthlyFee"),
+    badgeNumber: formData.get("badgeNumber") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
+
+  const gym = await getGymBilling(session.gymId);
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
 
   const subscriptionEnd = parseDate(parsed.data.subscriptionEnd);
   const email = normalizeEmail(parsed.data.email);
@@ -120,10 +155,13 @@ export async function updateMemberAction(memberId: string, formData: FormData) {
         status: resolveMemberStatusOnSubscriptionChange(existing.status, subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        ...(canBadge
+          ? { badgeNumber: normalizeBadgeNumber(parsed.data.badgeNumber) }
+          : {}),
       },
     });
-  } catch {
-    return { error: "form.phoneExists" };
+  } catch (error) {
+    return { error: uniqueConflictError(error) };
   }
 
   if (email && (sendInvite || emailChanged) && existing.inviteStatus !== MemberInviteStatus.ACTIVE) {
