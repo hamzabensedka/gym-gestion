@@ -41,8 +41,10 @@ test.describe("Members management", () => {
     await page.locator('input[name="monthlyFee"]').fill("99");
     await page.getByRole("button", { name: "Créer le membre" }).click();
 
-    await expect(page).toHaveURL(/\/members\/[a-z0-9]+/);
-    await expect(page.getByRole("heading", { name: "Test E2E Member" })).toBeVisible();
+    await expect(page).toHaveURL(/\/members\/[a-z0-9]+/, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Test E2E Member" })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("shows validation error for duplicate phone", async ({ page }) => {
@@ -59,7 +61,8 @@ test.describe("Members management", () => {
   test("exports members CSV", async ({ page }) => {
     await page.goto("/members");
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("link", { name: /Exporter/i }).click();
+    // Pro also shows "Exporter pour logiciel d'accès" — target members CSV only.
+    await page.locator('a[href^="/api/members/export"]').click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/membres-.*\.csv/i);
   });

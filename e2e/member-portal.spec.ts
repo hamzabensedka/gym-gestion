@@ -5,7 +5,8 @@ test.describe("Member portal", () => {
     await page.goto("/member");
     await expect(page).toHaveURL(/\/member/);
     await expect(page.getByText("Ahmed Ben Ali")).toBeVisible();
-    await expect(page.getByText("FitBox Mahdia")).toBeVisible();
+    // FitBox theme shows the brand via logo aria-label, not plain gym name text.
+    await expect(page.getByLabel("FitBox Mahdia")).toBeVisible();
   });
 
   test("navigates to QR card page", async ({ page }) => {
