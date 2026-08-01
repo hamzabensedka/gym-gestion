@@ -19,7 +19,14 @@ export default async function SettingsPage() {
 
   const gym = await prisma.gym.findUnique({
     where: { id: session.gymId },
-    select: { name: true, location: true, cardTheme: true },
+    select: {
+      name: true,
+      location: true,
+      cardTheme: true,
+      plan: true,
+      accessMode: true,
+      maxStaff: true,
+    },
   });
 
   return (
@@ -29,6 +36,9 @@ export default async function SettingsPage() {
         gymName={gym?.name ?? ""}
         gymLocation={gym?.location ?? ""}
         cardTheme={gym?.cardTheme ?? "default"}
+        plan={gym?.plan ?? "STARTER"}
+        accessMode={gym?.accessMode ?? "DESK_ONLY"}
+        maxStaff={gym?.maxStaff ?? 2}
       />
     </StaggerGroup>
   );
