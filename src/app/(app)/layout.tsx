@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Role } from "@prisma/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
@@ -14,12 +16,25 @@ export default async function AppLayout({
   }
 
   let gymName = session.gymName;
-  if (!gymName) {
+  let onboardingCompletedAt: Date | null | undefined;
+
+  if (session.role === Role.ADMIN || !gymName) {
     const gym = await prisma.gym.findUnique({
       where: { id: session.gymId },
-      select: { name: true },
+      select: { name: true, onboardingCompletedAt: true },
     });
-    gymName = gym?.name ?? "Gym Gestion";
+    if (!gymName) {
+      gymName = gym?.name ?? "Gym Gestion";
+    }
+    onboardingCompletedAt = gym?.onboardingCompletedAt ?? null;
+  }
+
+  if (session.role === Role.ADMIN && onboardingCompletedAt == null) {
+    const headerList = await headers();
+    const pathname = headerList.get("x-pathname") ?? "";
+    if (pathname !== "/onboarding" && !pathname.startsWith("/onboarding/")) {
+      redirect("/onboarding");
+    }
   }
 
   return (

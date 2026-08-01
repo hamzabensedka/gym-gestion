@@ -11,10 +11,19 @@ const ADMIN_ONLY_PREFIXES = [
   "/staff",
   "/settings",
   "/members/new",
+  "/onboarding",
 ];
 const CHECKIN_PREFIXES = ["/scan", "/manual"];
 
 const MEMBER_PUBLIC_PREFIXES = ["/member/invite"];
+
+function nextWithPathname(request: NextRequest, pathname: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+}
 
 function getStaffSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -80,12 +89,12 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/member/auth/login") ||
       pathname.startsWith("/api/member/auth/set-password")) {
-    return NextResponse.next();
+    return nextWithPathname(request, pathname);
   }
 
   // Member API routes handle their own session checks (return JSON, never redirect)
   if (pathname.startsWith("/api/member/")) {
-    return NextResponse.next();
+    return nextWithPathname(request, pathname);
   }
 
   if (pathname === "/member/login" || pathname.startsWith("/member/login/")) {
@@ -98,12 +107,12 @@ export async function proxy(request: NextRequest) {
 
   if (isMemberRoute(pathname)) {
     if (isMemberPublicRoute(pathname)) {
-      return NextResponse.next();
+      return nextWithPathname(request, pathname);
     }
 
     const memberLoggedIn = await hasMemberSession(request);
     if (memberLoggedIn) {
-      return NextResponse.next();
+      return nextWithPathname(request, pathname);
     }
 
     const staffRole = await getStaffRole(request);
@@ -131,7 +140,7 @@ export async function proxy(request: NextRequest) {
         );
       }
     }
-    return NextResponse.next();
+    return nextWithPathname(request, pathname);
   }
 
   const role = await getStaffRole(request);
@@ -158,7 +167,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return nextWithPathname(request, pathname);
 }
 
 export const config = {
@@ -169,6 +178,8 @@ export const config = {
     "/attendance/:path*",
     "/staff/:path*",
     "/settings/:path*",
+    "/onboarding",
+    "/onboarding/:path*",
     "/today",
     "/today/:path*",
     "/account",

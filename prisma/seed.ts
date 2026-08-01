@@ -1,4 +1,12 @@
-import { PrismaClient, Role, MemberStatus, MemberInviteStatus, PaymentMethod } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  MemberStatus,
+  MemberInviteStatus,
+  PaymentMethod,
+  Plan,
+  AccessMode,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, subDays, setHours, setMinutes, subMonths } from "date-fns";
 
@@ -47,6 +55,10 @@ async function main() {
       name: "FitBox Mahdia",
       location: "Mahdia, Tunisie",
       cardTheme: "fitbox-mahdia",
+      plan: Plan.PRO,
+      accessMode: AccessMode.BADGE_PC_EXTENSION,
+      maxStaff: 10,
+      onboardingCompletedAt: new Date(),
     },
   });
 
