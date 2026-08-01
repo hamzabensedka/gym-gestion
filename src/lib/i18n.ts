@@ -342,6 +342,8 @@ const fr = {
   "dash.trendVsLastMonth": "vs mois dernier",
   "dash.trendNoBaseline": "nouveau",
   "dash.busiestHour": "Heure de pointe",
+  "dash.utilityBillsThisMonth": "Charges du mois",
+  "dash.drinksRevenueThisMonth": "Recettes boissons",
 
   "wa.bulkRemind": "Rappeler tout ({total})",
   "wa.bulkNext": "Suivant",
@@ -782,6 +784,8 @@ const ar = {
   "dash.trendVsLastMonth": "مقارنة بالشهر الماضي",
   "dash.trendNoBaseline": "جديد",
   "dash.busiestHour": "ساعة الذروة",
+  "dash.utilityBillsThisMonth": "مصاريف الشهر",
+  "dash.drinksRevenueThisMonth": "إيرادات المشروبات",
 
   "wa.bulkRemind": "تذكير الكل ({total})",
   "wa.bulkNext": "التالي",

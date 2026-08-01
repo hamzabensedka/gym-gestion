@@ -21,6 +21,7 @@ MVP de gestion de salle de sport pour petites salles en Tunisie. Mobile-first, r
 - **Tableau de bord** : revenu mensuel estimé, encaissements manuels, membres actifs/expirés, présents du jour, répartition des membres, graphe de fréquentation 7 jours, **heure de pointe**, tendances, abonnements à renouveler, activité récente, actions du jour.
 - **Paiements manuels** : enregistrement par l'admin (montant, mode, date, note), historique par membre, **export CSV** des paiements.
 - **Gel d'abonnement** : mise en pause temporaire avec dates de début/fin.
+- **Charges & Boissons** : factures eau/électricité/gaz (tous plans) ; stock et ventes de boissons (Growth/Pro) ; totaux du mois sur le tableau de bord admin.
 
 ### Extras inclus
 - **Bilingue Français / Arabe** avec bascule instantanée et mise en page **RTL** complète.
