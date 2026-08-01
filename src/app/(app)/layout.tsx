@@ -44,6 +44,8 @@ export default async function AppLayout({
       role={session.role}
       gymName={gymName}
       showKioskNav={planHasFeature(plan, "kiosk")}
+      showBillsNav={planHasFeature(plan, "utility_bills")}
+      showDrinksNav={planHasFeature(plan, "drinks")}
     >
       {children}
     </AppShell>

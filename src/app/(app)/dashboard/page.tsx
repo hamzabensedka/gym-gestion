@@ -12,6 +12,8 @@ import {
   CalendarClock,
   Wallet,
   Download,
+  Receipt,
+  CupSoda,
 } from "lucide-react";
 import { formatPeakHourRange } from "@gym/shared/peak-hours";
 import { Card, CardContent, CardHeader, CardTitle, StatCard } from "@/components/ui/card";
@@ -56,6 +58,8 @@ export default async function DashboardPage() {
     getGymBilling(session.gymId),
   ]);
   const canCsvExport = planHasFeature(gymBilling.plan, "csv_export");
+  const showUtilityBills = data.utilityBillsThisMonth !== null;
+  const showDrinksRevenue = data.drinksRevenueThisMonth !== null;
 
   const total = data.totalMembers || 1;
   const activePct = (data.activeMembers / total) * 100;
@@ -115,6 +119,26 @@ export default async function DashboardPage() {
       </div>
 
       <TrendChips trends={data.trends} locale={locale} />
+
+      {showUtilityBills || showDrinksRevenue ? (
+        <div className="grid grid-cols-2 gap-3">
+          {showUtilityBills ? (
+            <StatCard
+              label={t("dash.utilityBillsThisMonth")}
+              value={formatCurrency(data.utilityBillsThisMonth!)}
+              icon={<Receipt className="size-5" strokeWidth={1.75} />}
+            />
+          ) : null}
+          {showDrinksRevenue ? (
+            <StatCard
+              label={t("dash.drinksRevenueThisMonth")}
+              value={formatCurrency(data.drinksRevenueThisMonth!)}
+              tone="brand"
+              icon={<CupSoda className="size-5" strokeWidth={1.75} />}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

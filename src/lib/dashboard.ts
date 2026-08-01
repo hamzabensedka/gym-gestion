@@ -1,11 +1,13 @@
-import { MemberStatus } from "@prisma/client";
+import { MemberStatus, Plan } from "@prisma/client";
 import { addDays, endOfDay, endOfMonth, startOfDay, startOfMonth, subDays, subMonths } from "date-fns";
 import { buildActionItems } from "@gym/shared/dashboard-actions";
 import { buildTrendMetric } from "@gym/shared/dashboard-trends";
 import { buildPeakHours } from "@gym/shared/peak-hours";
+import { periodMonthStart } from "./bills";
 import { prisma } from "./db";
 import { syncMemberStatuses } from "./checkin";
 import { withOnboardedMemberFilter } from "./member-auth";
+import { planHasFeature } from "./plans";
 
 export async function getDashboardData(gymId: string) {
   await syncMemberStatuses(gymId);
@@ -15,6 +17,7 @@ export async function getDashboardData(gymId: string) {
   const todayEnd = endOfDay(now);
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+  const billsPeriodMonth = periodMonthStart(now);
   const weekStart = startOfDay(subDays(now, 6));
   const previousWeekStart = startOfDay(subDays(now, 13));
   const previousWeekEnd = endOfDay(subDays(now, 7));
@@ -42,8 +45,10 @@ export async function getDashboardData(gymId: string) {
     collectedLastMonthAgg,
     activeAtMonthStart,
     expiredAtMonthStart,
+    utilityBillsMonthAgg,
+    drinksRevenueMonthAgg,
   ] = await Promise.all([
-    prisma.gym.findUnique({ where: { id: gymId }, select: { name: true } }),
+    prisma.gym.findUnique({ where: { id: gymId }, select: { name: true, plan: true } }),
     prisma.member.count({ where: withOnboardedMemberFilter({ gymId }) }),
     prisma.member.count({
       where: withOnboardedMemberFilter({ gymId, status: MemberStatus.ACTIVE }),
@@ -158,7 +163,23 @@ export async function getDashboardData(gymId: string) {
         subscriptionEnd: { lt: monthStart },
       }),
     }),
+    prisma.utilityBill.aggregate({
+      where: { gymId, periodMonth: billsPeriodMonth },
+      _sum: { amount: true },
+    }),
+    prisma.drinkSale.aggregate({
+      where: { gymId, soldAt: { gte: monthStart, lte: monthEnd } },
+      _sum: { total: true },
+    }),
   ]);
+
+  const plan = gym?.plan ?? Plan.STARTER;
+  const utilityBillsThisMonth = planHasFeature(plan, "utility_bills")
+    ? Number(utilityBillsMonthAgg._sum.amount ?? 0)
+    : null;
+  const drinksRevenueThisMonth = planHasFeature(plan, "drinks")
+    ? Number(drinksRevenueMonthAgg._sum.total ?? 0)
+    : null;
 
   const paymentFollowup = expiredMembersList.filter((member) => {
     const lastPayment = member.payments[0];
@@ -220,5 +241,7 @@ export async function getDashboardData(gymId: string) {
     actionItems,
     trends,
     busiestHour,
+    utilityBillsThisMonth,
+    drinksRevenueThisMonth,
   };
 }

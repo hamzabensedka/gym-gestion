@@ -14,11 +14,26 @@ describe("plans", () => {
     expect(getPlanLimits(Plan.STARTER).maxStaff).toBe(2);
   });
 
+  it("all plans have utility_bills", () => {
+    expect(planHasFeature(Plan.STARTER, "utility_bills")).toBe(true);
+    expect(planHasFeature(Plan.GROWTH, "utility_bills")).toBe(true);
+    expect(planHasFeature(Plan.PRO, "utility_bills")).toBe(true);
+  });
+
+  it("starter has no drinks", () => {
+    expect(planHasFeature(Plan.STARTER, "drinks")).toBe(false);
+  });
+
   it("growth has kiosk and csv export", () => {
     expect(planHasFeature(Plan.GROWTH, "kiosk")).toBe(true);
     expect(planHasFeature(Plan.GROWTH, "csv_export")).toBe(true);
     expect(planHasFeature(Plan.GROWTH, "access_export")).toBe(false);
     expect(getPlanLimits(Plan.GROWTH).maxStaff).toBe(5);
+  });
+
+  it("growth and pro have drinks", () => {
+    expect(planHasFeature(Plan.GROWTH, "drinks")).toBe(true);
+    expect(planHasFeature(Plan.PRO, "drinks")).toBe(true);
   });
 
   it("pro has badge + access export", () => {
