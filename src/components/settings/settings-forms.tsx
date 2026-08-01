@@ -14,8 +14,7 @@ import { useT } from "@/components/i18n/locale-provider";
 import {
   updateGymAction,
   changePasswordAction,
-  updatePlanAction,
-  updateAccessModeAction,
+  updatePlanAndAccessAction,
 } from "@/app/actions/settings";
 import type { TranslationKey } from "@/lib/i18n";
 import { GYM_CARD_THEME_OPTIONS } from "@/lib/gym-card-themes";
@@ -64,7 +63,6 @@ export function SettingsForms({
   cardTheme: string;
   plan: Plan;
   accessMode: AccessMode;
-  maxStaff: number;
 }) {
   const t = useT();
   const router = useRouter();
@@ -130,14 +128,9 @@ export function SettingsForms({
     formData.set("plan", plan);
     formData.set("accessMode", accessMode);
     startTransition(async () => {
-      const planResult = await updatePlanAction(formData);
-      if (planResult && "error" in planResult && planResult.error) {
-        setPlanError(planResult.error);
-        return;
-      }
-      const modeResult = await updateAccessModeAction(formData);
-      if (modeResult && "error" in modeResult && modeResult.error) {
-        setPlanError(modeResult.error);
+      const result = await updatePlanAndAccessAction(formData);
+      if (result && "error" in result && result.error) {
+        setPlanError(result.error);
         return;
       }
       setPlanSaved(true);

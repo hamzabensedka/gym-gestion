@@ -51,6 +51,39 @@ export async function updateGymAction(formData: FormData) {
   return { ok: true };
 }
 
+export async function updatePlanAndAccessAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
+
+  const planRaw = formData.get("plan");
+  if (!isPlan(planRaw)) {
+    return { error: "settings.invalidPlan" };
+  }
+
+  const modeRaw = formData.get("accessMode");
+  if (!isAccessMode(modeRaw)) {
+    return { error: "settings.invalidAccessMode" };
+  }
+
+  const maxStaff = getPlanLimits(planRaw).maxStaff;
+  const allowed = modesAllowedForPlan(planRaw);
+  const accessMode = allowed.includes(modeRaw) ? modeRaw : AccessMode.DESK_ONLY;
+
+  await prisma.gym.update({
+    where: { id: session.gymId },
+    data: {
+      plan: planRaw,
+      maxStaff,
+      accessMode,
+    },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  revalidatePath("/staff");
+  return { ok: true, plan: planRaw, accessMode, maxStaff };
+}
+
 export async function updatePlanAction(formData: FormData) {
   const session = await requireSession();
   if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
