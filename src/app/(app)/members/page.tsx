@@ -18,6 +18,8 @@ import { getSession } from "@/lib/session";
 import { canAccessDesk, canAccessAdmin } from "@/lib/auth";
 import { getLocale } from "@/lib/locale";
 import { createTranslator } from "@/lib/i18n";
+import { getGymBilling } from "@/lib/gym-features";
+import { planHasFeature } from "@/lib/plans";
 import { addDays, endOfDay, startOfDay } from "date-fns";
 import { buildWhatsappQueue } from "@gym/shared/subscription";
 import { BulkWhatsappReminder } from "@/components/members/bulk-whatsapp-reminder";
@@ -50,6 +52,10 @@ export default async function MembersPage({
   const t = createTranslator(locale);
   const { q = "", f = "all" } = await searchParams;
   const filter = (filters.includes(f as Filter) ? f : "all") as Filter;
+
+  const gymBilling = await getGymBilling(session.gymId);
+  const canCsvExport = planHasFeature(gymBilling.plan, "csv_export");
+  const canAccessExport = planHasFeature(gymBilling.plan, "access_export");
 
   await syncMemberStatuses(session.gymId);
 
@@ -115,12 +121,22 @@ export default async function MembersPage({
         action={
           isAdmin ? (
           <div className="flex items-center gap-2">
-            <a href={exportHref} title={t("members.export")}>
-              <Button variant="outline" size="md" className="px-3">
-                <Download className="size-4" />
-                <span className="hidden sm:inline">{t("members.export")}</span>
-              </Button>
-            </a>
+            {canCsvExport ? (
+              <a href={exportHref} title={t("members.export")}>
+                <Button variant="outline" size="md" className="px-3">
+                  <Download className="size-4" />
+                  <span className="hidden sm:inline">{t("members.export")}</span>
+                </Button>
+              </a>
+            ) : null}
+            {canAccessExport ? (
+              <a href="/api/access/export" title={t("members.exportAccess")}>
+                <Button variant="outline" size="md" className="px-3">
+                  <Download className="size-4" />
+                  <span className="hidden sm:inline">{t("members.exportAccess")}</span>
+                </Button>
+              </a>
+            ) : null}
             <Link href="/members/new">
               <Button>
                 <Plus className="size-5" />

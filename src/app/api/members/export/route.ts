@@ -1,5 +1,6 @@
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { assertFeature } from "@/lib/gym-features";
 import { withOnboardedMemberFilter } from "@/lib/member-auth";
 import { getSession } from "@/lib/session";
 import { format } from "date-fns";
@@ -16,6 +17,15 @@ export async function GET(request: Request) {
   const session = await getSession();
   if (!session || session.role !== Role.ADMIN) {
     return new Response("Non autorisé", { status: 401 });
+  }
+
+  try {
+    await assertFeature(session.gymId, "csv_export");
+  } catch (error) {
+    if (error instanceof Error && error.message === "FEATURE_LOCKED") {
+      return Response.json({ error: "FEATURE_LOCKED" }, { status: 403 });
+    }
+    throw error;
   }
 
   const { searchParams } = new URL(request.url);

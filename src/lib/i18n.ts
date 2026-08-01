@@ -56,6 +56,7 @@ const fr = {
 
   "members.title": "Membres",
   "members.export": "Exporter",
+  "members.exportAccess": "Exporter pour logiciel d'accès",
   "members.addMember": "Ajouter un membre",
   "members.searchPlaceholder": "Rechercher par nom ou téléphone…",
   "members.noMembers": "Aucun membre trouvé",
@@ -431,6 +432,7 @@ const ar = {
 
   "members.title": "الأعضاء",
   "members.export": "تصدير",
+  "members.exportAccess": "تصدير لبرنامج الدخول",
   "members.addMember": "إضافة عضو",
   "members.searchPlaceholder": "البحث بالاسم أو الهاتف…",
   "members.noMembers": "لا يوجد أعضاء",
