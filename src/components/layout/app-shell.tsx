@@ -15,6 +15,7 @@ import {
   LogOut,
   MoreHorizontal,
   Tablet,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
@@ -46,6 +47,12 @@ const kioskNavItem: NavItem = {
   icon: Tablet,
 };
 
+const billsNavItem: NavItem = {
+  href: "/bills",
+  labelKey: "nav.bills",
+  icon: Receipt,
+};
+
 const adminNavBase: NavItem[] = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/members", labelKey: "nav.members", icon: Users },
@@ -64,12 +71,23 @@ const staffNavBase: NavItem[] = [
   { href: "/account", labelKey: "nav.account", icon: Settings },
 ];
 
-function buildNav(role: Role, showKioskNav: boolean): NavItem[] {
-  const base = role === Role.ADMIN ? adminNavBase : staffNavBase;
-  if (!showKioskNav) return base;
-  const scanIndex = base.findIndex((item) => item.href === "/scan");
-  const insertAt = scanIndex >= 0 ? scanIndex + 1 : base.length;
-  return [...base.slice(0, insertAt), kioskNavItem, ...base.slice(insertAt)];
+function buildNav(
+  role: Role,
+  showKioskNav: boolean,
+  showBillsNav: boolean,
+): NavItem[] {
+  let base = role === Role.ADMIN ? adminNavBase : staffNavBase;
+  if (showKioskNav) {
+    const scanIndex = base.findIndex((item) => item.href === "/scan");
+    const insertAt = scanIndex >= 0 ? scanIndex + 1 : base.length;
+    base = [...base.slice(0, insertAt), kioskNavItem, ...base.slice(insertAt)];
+  }
+  if (showBillsNav && role === Role.ADMIN) {
+    const staffIndex = base.findIndex((item) => item.href === "/staff");
+    const insertAt = staffIndex >= 0 ? staffIndex : base.length;
+    base = [...base.slice(0, insertAt), billsNavItem, ...base.slice(insertAt)];
+  }
+  return base;
 }
 
 function isActive(pathname: string, href: string) {
@@ -162,12 +180,14 @@ export function AppShell({
   role,
   gymName,
   showKioskNav = false,
+  showBillsNav = false,
   children,
 }: {
   userName: string;
   role: Role;
   gymName: string;
   showKioskNav?: boolean;
+  showBillsNav?: boolean;
   children: React.ReactNode;
 }) {
   const t = useT();
@@ -176,7 +196,7 @@ export function AppShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const [instantDismiss, setInstantDismiss] = useState(false);
 
-  const nav = buildNav(role, showKioskNav);
+  const nav = buildNav(role, showKioskNav, showBillsNav);
   const mobilePrimary = nav.slice(0, 4);
   const mobileMore = nav.slice(4);
   const showMoreMenu = mobileMore.length > 0;
