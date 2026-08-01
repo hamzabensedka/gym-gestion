@@ -121,11 +121,21 @@ async function main() {
     createdMembers.push({ id: created.id, endOffset: m.endOffset, index: createdMembers.length, fee: m.fee });
   }
 
-  // Freeze a couple of members for demo.
-  const frozenTargets = createdMembers.filter((m) => m.endOffset >= 0).slice(0, 2);
-  for (const target of frozenTargets) {
+  // Freeze named demo members only — keep "Ahmed Ben Ali" ACTIVE (tests + primary demo login).
+  const freezeNames = new Set(["Ines Jlassi", "Nour Belhaj"]);
+  const frozenNameToId = new Map(
+    (
+      await prisma.member.findMany({
+        where: { gymId: gym.id, fullName: { in: [...freezeNames] } },
+        select: { id: true, fullName: true },
+      })
+    ).map((m) => [m.fullName, m.id] as const),
+  );
+  for (const name of freezeNames) {
+    const id = frozenNameToId.get(name);
+    if (!id) continue;
     await prisma.member.update({
-      where: { id: target.id },
+      where: { id },
       data: {
         status: MemberStatus.FROZEN,
         frozenAt: subDays(now, 3),
