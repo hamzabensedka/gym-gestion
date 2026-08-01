@@ -36,6 +36,20 @@ MVP de gestion de salle de sport pour petites salles en Tunisie. Mobile-first, r
 - **Admin / Propriétaire** : accès complet (membres, finances, stats, équipe, réglages).
 - **Réception (Staff)** : check-in QR et manuel uniquement.
 
+## Plans SaaS
+
+Chaque salle a un **plan** (Starter / Growth / Pro) et un **mode d'accès** (`DESK_ONLY`, `KIOSK`, `BADGE_PC_EXTENSION`, …) qui débloquent les bonnes fonctionnalités sans remplacer le système existant.
+
+| Plan | Cible | Fonctionnalités clés |
+|------|-------|----------------------|
+| **Starter** | Réception seule | Membres, abonnements, check-in QR/manuel (2 staff max) |
+| **Growth** | Kiosk / accès souple | + export CSV membres/paiements, kiosk self check-in (5 staff) |
+| **Pro** | Badges + logiciel PC | + numéro de badge, export liste autorisée pour la porte (10 staff) |
+
+**Pro — export porte :** les admins téléchargent la liste des badges autorisés via `GET /api/access/export` (CSV `access-allowed.csv`).
+
+Spécification complète : [docs/superpowers/specs/2026-08-01-saas-plans-access-modes-design.md](docs/superpowers/specs/2026-08-01-saas-plans-access-modes-design.md)
+
 ## Démarrage local
 
 ### Base de données
