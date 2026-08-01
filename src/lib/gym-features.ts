@@ -1,6 +1,6 @@
-import { canAddStaff } from "@gym/shared/gym-features";
+import { assertPlanFeature, canAddStaff } from "@gym/shared/gym-features";
 import { prisma } from "@/lib/db";
-import { planHasFeature, type PlanFeature } from "@/lib/plans";
+import type { PlanFeature } from "@/lib/plans";
 
 export { canAddStaff };
 
@@ -20,7 +20,5 @@ export async function getGymBilling(gymId: string) {
 
 export async function assertFeature(gymId: string, feature: PlanFeature) {
   const gym = await getGymBilling(gymId);
-  if (!planHasFeature(gym.plan, feature)) {
-    throw new Error("FEATURE_LOCKED");
-  }
+  assertPlanFeature(gym.plan, feature);
 }

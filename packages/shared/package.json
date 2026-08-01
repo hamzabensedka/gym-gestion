@@ -18,7 +18,10 @@
     "./dashboard-trends": "./src/dashboard-trends.ts",
     "./freeze": "./src/freeze.ts",
     "./peak-hours": "./src/peak-hours.ts",
-    "./gym-features": "./src/gym-features.ts"
+    "./gym-features": "./src/gym-features.ts",
+    "./plans": "./src/plans.ts",
+    "./bills": "./src/bills.ts",
+    "./drinks": "./src/drinks.ts"
   },
   "dependencies": {
     "date-fns": "^4.4.0",
