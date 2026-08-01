@@ -44,6 +44,8 @@ type DashboardData = {
   }>;
   weeklyAttendance: Array<{ date: string; count: number }>;
   trends: DashboardTrends;
+  utilityBillsThisMonth: number | null;
+  drinksRevenueThisMonth: number | null;
 };
 
 const paymentMethodKeys: Record<DashboardData["recentPayments"][number]["method"], TranslationKey> = {
@@ -147,6 +149,8 @@ export default function DashboardScreen() {
   const expiringPct = (data.expiringCount / total) * 100;
   const expiredPct = (data.expiredMembers / total) * 100;
   const maxWeekly = Math.max(...data.weeklyAttendance.map((d) => d.count), 1);
+  const showUtilityBills = data.utilityBillsThisMonth !== null;
+  const showDrinksRevenue = data.drinksRevenueThisMonth !== null;
 
   return (
     <View style={styles.safe}>
@@ -288,6 +292,26 @@ export default function DashboardScreen() {
             </View>
           ))}
         </View>
+
+        {showUtilityBills || showDrinksRevenue ? (
+          <View style={styles.statsGrid}>
+            {showUtilityBills ? (
+              <StatCard
+                label={t("bills.total")}
+                value={formatCurrency(data.utilityBillsThisMonth!)}
+                icon={<FeatherIcon name="file-text" size={18} color={colors.foreground} />}
+              />
+            ) : null}
+            {showDrinksRevenue ? (
+              <StatCard
+                label={t("drinks.revenue")}
+                value={formatCurrency(data.drinksRevenueThisMonth!)}
+                tone="brand"
+                icon={<FeatherIcon name="coffee" size={18} color={colors.brand} />}
+              />
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={styles.statsGrid}>
           <StatCard
