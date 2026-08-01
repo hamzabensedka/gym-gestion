@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   MoreHorizontal,
+  Tablet,
   type LucideIcon,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
@@ -39,7 +40,13 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-const adminNav: NavItem[] = [
+const kioskNavItem: NavItem = {
+  href: "/kiosk",
+  labelKey: "nav.kiosk",
+  icon: Tablet,
+};
+
+const adminNavBase: NavItem[] = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/members", labelKey: "nav.members", icon: Users },
   { href: "/scan", labelKey: "nav.scan", icon: ScanLine },
@@ -49,13 +56,21 @@ const adminNav: NavItem[] = [
   { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
-const staffNav: NavItem[] = [
+const staffNavBase: NavItem[] = [
   { href: "/scan", labelKey: "nav.scan", icon: ScanLine },
   { href: "/manual", labelKey: "nav.manual", icon: Search },
   { href: "/members", labelKey: "nav.members", icon: Users },
   { href: "/today", labelKey: "nav.today", icon: CalendarCheck },
   { href: "/account", labelKey: "nav.account", icon: Settings },
 ];
+
+function buildNav(role: Role, showKioskNav: boolean): NavItem[] {
+  const base = role === Role.ADMIN ? adminNavBase : staffNavBase;
+  if (!showKioskNav) return base;
+  const scanIndex = base.findIndex((item) => item.href === "/scan");
+  const insertAt = scanIndex >= 0 ? scanIndex + 1 : base.length;
+  return [...base.slice(0, insertAt), kioskNavItem, ...base.slice(insertAt)];
+}
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -146,11 +161,13 @@ export function AppShell({
   userName,
   role,
   gymName,
+  showKioskNav = false,
   children,
 }: {
   userName: string;
   role: Role;
   gymName: string;
+  showKioskNav?: boolean;
   children: React.ReactNode;
 }) {
   const t = useT();
@@ -159,7 +176,7 @@ export function AppShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const [instantDismiss, setInstantDismiss] = useState(false);
 
-  const nav = role === Role.ADMIN ? adminNav : staffNav;
+  const nav = buildNav(role, showKioskNav);
   const mobilePrimary = nav.slice(0, 4);
   const mobileMore = nav.slice(4);
   const showMoreMenu = mobileMore.length > 0;

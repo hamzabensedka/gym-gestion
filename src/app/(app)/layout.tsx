@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Role } from "@prisma/client";
+import { Plan, Role } from "@prisma/client";
 import { AppShell } from "@/components/layout/app-shell";
+import { planHasFeature } from "@/lib/plans";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/db";
 
@@ -17,17 +18,17 @@ export default async function AppLayout({
 
   let gymName = session.gymName;
   let onboardingCompletedAt: Date | null | undefined;
+  let plan: Plan = Plan.STARTER;
 
-  if (session.role === Role.ADMIN || !gymName) {
-    const gym = await prisma.gym.findUnique({
-      where: { id: session.gymId },
-      select: { name: true, onboardingCompletedAt: true },
-    });
-    if (!gymName) {
-      gymName = gym?.name ?? "Gym Gestion";
-    }
-    onboardingCompletedAt = gym?.onboardingCompletedAt ?? null;
+  const gym = await prisma.gym.findUnique({
+    where: { id: session.gymId },
+    select: { name: true, onboardingCompletedAt: true, plan: true },
+  });
+  if (!gymName) {
+    gymName = gym?.name ?? "Gym Gestion";
   }
+  onboardingCompletedAt = gym?.onboardingCompletedAt ?? null;
+  plan = gym?.plan ?? Plan.STARTER;
 
   if (session.role === Role.ADMIN && onboardingCompletedAt == null) {
     const headerList = await headers();
@@ -42,6 +43,7 @@ export default async function AppLayout({
       userName={session.name}
       role={session.role}
       gymName={gymName}
+      showKioskNav={planHasFeature(plan, "kiosk")}
     >
       {children}
     </AppShell>
