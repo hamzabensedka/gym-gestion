@@ -7,7 +7,7 @@ import {
   sumCollectedInRange,
 } from "@/lib/payments";
 import { resetTestDatabase, findGymId, getPrisma } from "../helpers/db";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 
 describe("payments integration", () => {
   let gymId: string;
@@ -107,16 +107,18 @@ describe("payments integration", () => {
   it("sums collected revenue in date range", async () => {
     const member = await createTestMember();
     const now = new Date();
+    const thisMonthPaidAt = format(now, "yyyy-MM-dd");
+    const lastMonthPaidAt = format(subMonths(now, 1), "yyyy-MM-dd");
 
     await createPayment(gymId, member.id, adminId, {
       amount: 80,
       method: PaymentMethod.CASH,
-      paidAt: "2026-07-05",
+      paidAt: thisMonthPaidAt,
     });
     await createPayment(gymId, member.id, adminId, {
       amount: 40,
       method: PaymentMethod.CARD,
-      paidAt: "2026-06-15",
+      paidAt: lastMonthPaidAt,
     });
 
     const thisMonth = await sumCollectedInRange(

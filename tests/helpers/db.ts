@@ -30,7 +30,7 @@ export function resetTestDatabase() {
     );
   }
 
-  execSync("npx prisma db push", {
+  execSync("npx prisma db push --accept-data-loss", {
     cwd: root,
     env,
     stdio: "inherit",
