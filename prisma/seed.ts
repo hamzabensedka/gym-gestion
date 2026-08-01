@@ -22,12 +22,13 @@ const memberSeed: Array<{
   endOffset: number;
   fee: number;
   notes?: string;
+  badgeNumber?: string;
 }> = [
-  { fullName: "Ahmed Ben Ali", phone: "+21620123456", startOffset: -10, endOffset: 20, fee: 80, notes: "Abonnement 1 mois" },
-  { fullName: "Sara Trabelsi", phone: "+21622111222", startOffset: -40, endOffset: -5, fee: 120, notes: "Renouvellement en attente" },
-  { fullName: "Youssef Gharbi", phone: "+21698765432", startOffset: -5, endOffset: 3, fee: 100 },
-  { fullName: "Mariem Bouazizi", phone: "+21655443322", startOffset: -60, endOffset: 30, fee: 150, notes: "Coaching personnel" },
-  { fullName: "Khalil Mansour", phone: "+21621987654", startOffset: -90, endOffset: 90, fee: 70, notes: "Abonnement annuel" },
+  { fullName: "Ahmed Ben Ali", phone: "+21620123456", startOffset: -10, endOffset: 20, fee: 80, notes: "Abonnement 1 mois", badgeNumber: "1001" },
+  { fullName: "Sara Trabelsi", phone: "+21622111222", startOffset: -40, endOffset: -5, fee: 120, notes: "Renouvellement en attente", badgeNumber: "1002" },
+  { fullName: "Youssef Gharbi", phone: "+21698765432", startOffset: -5, endOffset: 3, fee: 100, badgeNumber: "1003" },
+  { fullName: "Mariem Bouazizi", phone: "+21655443322", startOffset: -60, endOffset: 30, fee: 150, notes: "Coaching personnel", badgeNumber: "1004" },
+  { fullName: "Khalil Mansour", phone: "+21621987654", startOffset: -90, endOffset: 90, fee: 70, notes: "Abonnement annuel", badgeNumber: "1005" },
   { fullName: "Ines Jlassi", phone: "+21629334455", startOffset: -15, endOffset: 15, fee: 90 },
   { fullName: "Hamza Khelifi", phone: "+21652778899", startOffset: -120, endOffset: -20, fee: 80, notes: "Inactif" },
   { fullName: "Nour Belhaj", phone: "+21624556677", startOffset: -7, endOffset: 23, fee: 110 },
@@ -114,6 +115,7 @@ async function main() {
         status: statusFor(m.endOffset),
         monthlyFee: m.fee,
         notes: m.notes ?? null,
+        badgeNumber: m.badgeNumber ?? null,
       },
     });
     createdMembers.push({ id: created.id, endOffset: m.endOffset, index: createdMembers.length, fee: m.fee });

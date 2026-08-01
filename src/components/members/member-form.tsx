@@ -21,8 +21,10 @@ type MemberFormProps = {
     notes?: string | null;
     monthlyFee: number;
     inviteStatus?: string | null;
+    badgeNumber?: string | null;
   };
   mode: "create" | "edit";
+  showBadgeField?: boolean;
 };
 
 const planLabelKey: Record<number, TranslationKey> = {
@@ -34,7 +36,7 @@ const planLabelKey: Record<number, TranslationKey> = {
 
 const today = format(new Date(), "yyyy-MM-dd");
 
-export function MemberForm({ action, defaultValues, mode }: MemberFormProps) {
+export function MemberForm({ action, defaultValues, mode, showBadgeField = false }: MemberFormProps) {
   const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -86,6 +88,17 @@ export function MemberForm({ action, defaultValues, mode }: MemberFormProps) {
           defaultValue={defaultValues?.email ?? ""}
         />
       </Field>
+
+      {showBadgeField ? (
+        <Field label={t("form.badgeNumber")}>
+          <Input
+            name="badgeNumber"
+            inputMode="numeric"
+            placeholder="1001"
+            defaultValue={defaultValues?.badgeNumber ?? ""}
+          />
+        </Field>
+      ) : null}
 
       {defaultValues?.inviteStatus !== "ACTIVE" ? (
         <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-3">
