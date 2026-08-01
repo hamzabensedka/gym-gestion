@@ -76,6 +76,8 @@ model Gym {
   checkins              Checkin[]
   payments              Payment[]
   utilityBills          UtilityBill[]
+  drinkProducts         DrinkProduct[]
+  drinkSales            DrinkSale[]
 }
 
 model User {
@@ -89,6 +91,7 @@ model User {
   createdAt    DateTime  @default(now())
   payments     Payment[]
   utilityBills UtilityBill[]
+  drinkSales   DrinkSale[]
 
   @@unique([gymId, email])
   @@index([email])
@@ -190,4 +193,42 @@ model UtilityBill {
 
   @@index([gymId, periodMonth])
   @@index([gymId, type])
+}
+
+model DrinkProduct {
+  id        String      @id @default(cuid())
+  gymId     String
+  gym       Gym         @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name      String
+  sellPrice Decimal     @db.Decimal(10, 2)
+  costPrice Decimal?    @db.Decimal(10, 2)
+  stockQty  Int
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  sales     DrinkSale[]
+
+  @@unique([gymId, name])
+  @@index([gymId, active])
+}
+
+model DrinkSale {
+  id           String        @id @default(cuid())
+  gymId        String
+  gym          Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  productId    String
+  product      DrinkProduct  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity     Int
+  unitPrice    Decimal       @db.Decimal(10, 2)
+  total        Decimal       @db.Decimal(10, 2)
+  method       PaymentMethod
+  soldAt       DateTime
+  note         String?
+  recordedById String
+  recordedBy   User          @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime      @default(now())
+
+  @@index([gymId, soldAt])
+  @@index([productId, soldAt])
+  @@index([recordedById])
 }
