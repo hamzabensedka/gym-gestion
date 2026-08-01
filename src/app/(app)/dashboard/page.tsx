@@ -27,6 +27,8 @@ import { buildWhatsappQueue } from "@gym/shared/subscription";
 import { BulkWhatsappReminder } from "@/components/members/bulk-whatsapp-reminder";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import { getDashboardData } from "@/lib/dashboard";
+import { getGymBilling } from "@/lib/gym-features";
+import { planHasFeature } from "@/lib/plans";
 import { getSession } from "@/lib/session";
 import { getLocale } from "@/lib/locale";
 import { createTranslator, type TranslationKey } from "@/lib/i18n";
@@ -49,7 +51,11 @@ export default async function DashboardPage() {
 
   const locale = await getLocale();
   const t = createTranslator(locale);
-  const data = await getDashboardData(session.gymId);
+  const [data, gymBilling] = await Promise.all([
+    getDashboardData(session.gymId),
+    getGymBilling(session.gymId),
+  ]);
+  const canCsvExport = planHasFeature(gymBilling.plan, "csv_export");
 
   const total = data.totalMembers || 1;
   const activePct = (data.activeMembers / total) * 100;
@@ -259,12 +265,14 @@ export default async function DashboardPage() {
               <Wallet className="size-5 text-brand" strokeWidth={1.75} />
               <CardTitle>{t("dash.recentPayments")}</CardTitle>
             </div>
-            <a href={paymentsExportHref} title={t("members.export")}>
-              <Button variant="outline" size="sm" className="px-3">
-                <Download className="size-4" />
-                <span className="hidden sm:inline">{t("members.export")}</span>
-              </Button>
-            </a>
+            {canCsvExport ? (
+              <a href={paymentsExportHref} title={t("members.export")}>
+                <Button variant="outline" size="sm" className="px-3">
+                  <Download className="size-4" />
+                  <span className="hidden sm:inline">{t("members.export")}</span>
+                </Button>
+              </a>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>
