@@ -24,6 +24,8 @@ const tabIcons = {
   scan: "camera",
   manual: "search",
   wallet: "credit-card",
+  bills: "file-text",
+  drinks: "coffee",
 } as const satisfies Record<string, FeatherName>;
 
 export type TabIconName = keyof typeof tabIcons;

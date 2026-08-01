@@ -36,6 +36,14 @@ export default function AdminLayout() {
           options={{ title: t("nav.manual"), href: null }}
         />
         <Tabs.Screen
+          name="bills"
+          options={{ title: t("nav.bills"), href: null }}
+        />
+        <Tabs.Screen
+          name="drinks"
+          options={{ title: t("nav.drinks"), href: null }}
+        />
+        <Tabs.Screen
           name="staff"
           options={{ title: t("nav.staff"), href: null }}
         />
