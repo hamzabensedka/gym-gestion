@@ -180,6 +180,8 @@ export const config = {
     "/settings/:path*",
     "/onboarding",
     "/onboarding/:path*",
+    "/kiosk",
+    "/kiosk/:path*",
     "/today",
     "/today/:path*",
     "/account",
