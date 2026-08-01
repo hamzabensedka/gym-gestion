@@ -1,9 +1,8 @@
+import { canAddStaff } from "@gym/shared/gym-features";
 import { prisma } from "@/lib/db";
 import { planHasFeature, type PlanFeature } from "@/lib/plans";
 
-export function canAddStaff(currentCount: number, maxStaff: number): boolean {
-  return currentCount < maxStaff;
-}
+export { canAddStaff };
 
 export async function getGymBilling(gymId: string) {
   const gym = await prisma.gym.findUniqueOrThrow({

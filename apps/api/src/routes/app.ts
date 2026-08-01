@@ -18,6 +18,7 @@ import { withOnboardedMemberFilter } from "@gym/shared/member-auth";
 import { extendSubscription } from "@gym/shared/subscription";
 import { generateMemberQrPayload } from "@gym/shared/member-qr";
 import { normalizePhone } from "@gym/shared/format";
+import { canAddStaff } from "@gym/shared/gym-features";
 import { prisma } from "../db";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
 import { issueMemberInvite } from "../services/member-invite";
@@ -500,6 +501,15 @@ staffRoutes.post("/", async (c) => {
   const parsed = staffSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: { code: "VALIDATION", message: parsed.error.issues[0]?.message ?? "Données invalides" } }, 422);
+  }
+
+  const gym = await prisma.gym.findUniqueOrThrow({
+    where: { id: session.gymId },
+    select: { maxStaff: true },
+  });
+  const count = await prisma.user.count({ where: { gymId: session.gymId } });
+  if (!canAddStaff(count, gym.maxStaff)) {
+    return c.json({ error: { code: "STAFF_LIMIT", message: "STAFF_LIMIT" } }, 403);
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);

@@ -10,3 +10,4 @@ export * from "./dashboard-trends";
 export * from "./freeze";
 export * from "./peak-hours";
 export * from "./desk";
+export * from "./gym-features";

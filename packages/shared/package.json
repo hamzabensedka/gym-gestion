@@ -17,7 +17,8 @@
     "./dashboard-actions": "./src/dashboard-actions.ts",
     "./dashboard-trends": "./src/dashboard-trends.ts",
     "./freeze": "./src/freeze.ts",
-    "./peak-hours": "./src/peak-hours.ts"
+    "./peak-hours": "./src/peak-hours.ts",
+    "./gym-features": "./src/gym-features.ts"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

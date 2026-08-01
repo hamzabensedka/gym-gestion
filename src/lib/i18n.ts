@@ -138,6 +138,7 @@ const fr = {
   "staff.role": "Rôle",
   "staff.create": "Créer le compte",
   "staff.emailExists": "Cet e-mail est déjà utilisé",
+  STAFF_LIMIT: "Limite de personnel atteinte pour votre formule",
 
   "settings.title": "Réglages",
   "settings.subtitle": "Configuration de la salle et de votre compte",
@@ -477,6 +478,7 @@ const ar = {
   "staff.role": "الدور",
   "staff.create": "إنشاء الحساب",
   "staff.emailExists": "البريد الإلكتروني مستخدم مسبقاً",
+  STAFF_LIMIT: "تم الوصول إلى الحد الأقصى للموظفين في خطتك",
 
   "settings.title": "الإعدادات",
   "settings.subtitle": "إعدادات النادي وحسابك",
