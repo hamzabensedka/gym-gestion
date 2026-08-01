@@ -32,16 +32,43 @@ enum MemberInviteStatus {
   DISABLED
 }
 
+enum Plan {
+  STARTER
+  GROWTH
+  PRO
+}
+
+enum AccessMode {
+  DESK_ONLY
+  KIOSK
+  BADGE_PC_EXTENSION
+  VENDOR_CONNECTOR
+  NEW_ACCESS_KIT
+}
+
+enum PlanStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
 model Gym {
-  id        String    @id @default(cuid())
-  name      String
-  location  String?
-  cardTheme String?
-  createdAt DateTime  @default(now())
-  users     User[]
-  members   Member[]
-  checkins  Checkin[]
-  payments  Payment[]
+  id                    String     @id @default(cuid())
+  name                  String
+  location              String?
+  cardTheme             String?
+  plan                  Plan       @default(STARTER)
+  accessMode            AccessMode @default(DESK_ONLY)
+  planStatus            PlanStatus @default(ACTIVE)
+  maxStaff              Int        @default(2)
+  onboardingCompletedAt DateTime?
+  lastAccessExportAt    DateTime?
+  createdAt             DateTime   @default(now())
+  users                 User[]
+  members               Member[]
+  checkins              Checkin[]
+  payments              Payment[]
 }
 
 model User {
@@ -78,6 +105,7 @@ model Member {
   frozenAt          DateTime?
   frozenUntil       DateTime?
   notes             String?
+  badgeNumber       String?
   monthlyFee        Decimal             @default(0) @db.Decimal(10, 2)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
@@ -86,6 +114,7 @@ model Member {
 
   @@unique([gymId, phone])
   @@unique([gymId, email])
+  @@unique([gymId, badgeNumber])
   @@index([gymId, status])
   @@index([gymId, fullName])
   @@index([gymId, subscriptionEnd])
