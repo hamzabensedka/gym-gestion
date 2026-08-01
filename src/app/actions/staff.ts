@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { canAddStaff, getGymBilling } from "@/lib/gym-features";
 import { requireSession } from "@/lib/session";
 import { staffSchema } from "@/lib/validations";
 
@@ -20,6 +21,12 @@ export async function createStaffAction(formData: FormData) {
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  }
+
+  const gym = await getGymBilling(session.gymId);
+  const count = await prisma.user.count({ where: { gymId: session.gymId } });
+  if (!canAddStaff(count, gym.maxStaff)) {
+    return { error: "STAFF_LIMIT" };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
