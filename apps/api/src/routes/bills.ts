@@ -1,10 +1,9 @@
 import { Hono } from "hono";
-import type { Context, Next } from "hono";
 import { UtilityType } from "@prisma/client";
 import { format } from "date-fns";
 import { periodMonthStart, sumBillsForMonth } from "@gym/shared/bills";
 import { prisma } from "../db";
-import { assertGymFeature, featureLockedResponse, isFeatureLockedError } from "../lib/features";
+import { requireGymFeature } from "../lib/features";
 import { requireAdmin } from "../middleware/auth";
 
 const UTILITY_TYPES = new Set<string>(Object.values(UtilityType));
@@ -42,23 +41,10 @@ export function parseOptionalDateInput(raw: unknown): Date | null | undefined {
   return date;
 }
 
-async function requireUtilityBillsFeature(c: Context, next: Next) {
-  const staff = c.get("staff");
-  try {
-    await assertGymFeature(staff.gymId, "utility_bills");
-  } catch (error) {
-    if (isFeatureLockedError(error)) {
-      return featureLockedResponse(c);
-    }
-    throw error;
-  }
-  await next();
-}
-
 export const billsRoutes = new Hono();
 
 billsRoutes.use("*", requireAdmin);
-billsRoutes.use("*", requireUtilityBillsFeature);
+billsRoutes.use("*", requireGymFeature("utility_bills"));
 
 billsRoutes.get("/", async (c) => {
   const staff = c.get("staff");

@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import type { Context, Next } from "hono";
 import { assertPlanFeature } from "@gym/shared/gym-features";
 import type { PlanFeature } from "@gym/shared/plans";
 import { prisma } from "../db";
@@ -20,4 +20,19 @@ export function featureLockedResponse(c: Context) {
     { error: { code: "FEATURE_LOCKED", message: "Fonctionnalité non incluse dans votre plan" } },
     403,
   );
+}
+
+export function requireGymFeature(feature: PlanFeature) {
+  return async (c: Context, next: Next) => {
+    const staff = c.get("staff");
+    try {
+      await assertGymFeature(staff.gymId, feature);
+    } catch (error) {
+      if (isFeatureLockedError(error)) {
+        return featureLockedResponse(c);
+      }
+      throw error;
+    }
+    await next();
+  };
 }
