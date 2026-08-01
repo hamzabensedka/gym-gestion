@@ -19,6 +19,7 @@ const fr = {
   "nav.members": "Membres",
   "nav.attendance": "Présences",
   "nav.scan": "Scanner",
+  "nav.kiosk": "Kiosque",
   "nav.manual": "Manuel",
   "nav.staff": "Personnel",
   "nav.settings": "Réglages",
@@ -29,6 +30,13 @@ const fr = {
   "nav.checkin": "Check-in",
   "nav.today": "Aujourd'hui",
   "nav.account": "Compte",
+
+  "kiosk.title": "Kiosque",
+  "kiosk.comingSoon": "Bientôt — la borne en libre-service arrive dans une prochaine version.",
+  "kiosk.lockedSubtitle": "Disponible avec les formules Growth et Pro",
+  "kiosk.phase2": "Phase 2 — le mode kiosque (scanner autonome) sera disponible prochainement.",
+  "kiosk.phase2Subtitle": "Mode borne en libre-service",
+  "kiosk.upgradeCta": "Passer à Growth ou Pro",
 
   "common.back": "Retour",
   "common.loading": "Chargement…",
@@ -395,6 +403,7 @@ const ar = {
   "nav.members": "الأعضاء",
   "nav.attendance": "الحضور",
   "nav.scan": "مسح",
+  "nav.kiosk": "كشك",
   "nav.manual": "يدوي",
   "nav.staff": "الموظفون",
   "nav.settings": "الإعدادات",
@@ -405,6 +414,13 @@ const ar = {
   "nav.checkin": "تسجيل",
   "nav.today": "اليوم",
   "nav.account": "الحساب",
+
+  "kiosk.title": "كشك",
+  "kiosk.comingSoon": "قريباً — محطة الخدمة الذاتية ستتوفر في إصدار لاحق.",
+  "kiosk.lockedSubtitle": "متاح مع خطتي Growth و Pro",
+  "kiosk.phase2": "المرحلة 2 — وضع الكشك (ماسح مستقل) سيكون متاحاً قريباً.",
+  "kiosk.phase2Subtitle": "وضع المحطة الذاتية",
+  "kiosk.upgradeCta": "الترقية إلى Growth أو Pro",
 
   "common.back": "رجوع",
   "common.loading": "جاري التحميل…",
