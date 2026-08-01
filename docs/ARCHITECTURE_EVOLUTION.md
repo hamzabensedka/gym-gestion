@@ -49,8 +49,10 @@ This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield m
 | Dashboard | `src/lib/dashboard.ts` | `apps/api/src/services/dashboard.ts` |
 | Staff limits | `src/app/actions/staff.ts` | `apps/api` staff route (partially shared via `canAddStaff`) |
 | Badge / plans | Web has Phase 1 | API often **behind** (badge not fully wired) |
+| Plan feature gates (`assertFeature`) | Enforced on web CSV/access exports | **Mostly missing on Hono** — mobile can bypass plan locks web enforces |
+| Validations / auth helpers | Often `src/lib/*` local copies | Prefers `@gym/shared/*` |
 
-**Change:** One application core that both adapters call. Stop “fix in web + forget API”.
+**Change:** One application core that both adapters call. Stop “fix in web + forget API”. Move `plans.ts` + `assertFeature` into a package both surfaces import. Delete identical duplicates (e.g. web `validations.ts` vs `@gym/shared/validations`).
 
 ### P2 — Prisma in the UI layer
 
@@ -195,8 +197,9 @@ Scale along **three axes**. Pick the order based on sales, not fashion.
 ### Now (after Phase 1 merge)
 
 1. Merge SaaS plans PR; run `prisma migrate` / `db push` on staging.
-2. **API parity for Phase 1** — badge field + access export + plan fields on gym settings via Hono.
-3. Smoke onboarding + Pro CSV on a real demo gym.
+2. **API parity for Phase 1** — share `planHasFeature` / `assertFeature` on Hono exports & mutations; badge field + access export + plan fields on gym settings.
+3. Point web imports at `@gym/shared` where files are already identical (start with `validations`).
+4. Smoke onboarding + Pro CSV on a real demo gym.
 
 ### Next (hexagonal foundation — ~1 vertical slice)
 
