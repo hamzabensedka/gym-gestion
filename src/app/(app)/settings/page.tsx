@@ -25,7 +25,6 @@ export default async function SettingsPage() {
       cardTheme: true,
       plan: true,
       accessMode: true,
-      maxStaff: true,
     },
   });
 
@@ -38,7 +37,6 @@ export default async function SettingsPage() {
         cardTheme={gym?.cardTheme ?? "default"}
         plan={gym?.plan ?? "STARTER"}
         accessMode={gym?.accessMode ?? "DESK_ONLY"}
-        maxStaff={gym?.maxStaff ?? 2}
       />
     </StaggerGroup>
   );
