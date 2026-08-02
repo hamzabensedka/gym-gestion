@@ -116,6 +116,7 @@ const fr = {
 
   "members.title": "Membres",
   "members.export": "Exporter",
+  "members.exportAccess": "Exporter pour logiciel d'accès",
   "members.addMember": "Ajouter un membre",
   "members.searchPlaceholder": "Rechercher par nom ou téléphone…",
   "members.noMembers": "Aucun membre trouvé",
@@ -134,6 +135,8 @@ const fr = {
   "form.plan12": "12 mois",
   "form.create": "Créer le membre",
   "form.phoneExists": "Ce numéro de téléphone est déjà utilisé",
+  "form.badgeNumber": "N° de badge",
+  "form.badgeExists": "Ce numéro de badge est déjà utilisé",
 
   "detail.renew": "Renouveler l'abonnement",
   "detail.renewDone": "Abonnement renouvelé",
@@ -176,6 +179,7 @@ const fr = {
   "payments.recordDone": "Paiement enregistré",
   "payments.history": "Historique des paiements",
   "payments.noPayments": "Aucun paiement enregistré",
+  "payments.export": "Exporter les paiements",
   "payments.amount": "Montant",
   "payments.method": "Mode de paiement",
   "payments.paidAt": "Date du paiement",
@@ -530,6 +534,7 @@ const ar = {
 
   "members.title": "الأعضاء",
   "members.export": "تصدير",
+  "members.exportAccess": "تصدير لبرنامج الدخول",
   "members.addMember": "إضافة عضو",
   "members.searchPlaceholder": "البحث بالاسم أو الهاتف…",
   "members.noMembers": "لا يوجد أعضاء",
@@ -548,6 +553,8 @@ const ar = {
   "form.plan12": "12 شهراً",
   "form.create": "إنشاء العضو",
   "form.phoneExists": "رقم الهاتف مستخدم مسبقاً",
+  "form.badgeNumber": "رقم الشارة",
+  "form.badgeExists": "رقم الشارة مستخدم مسبقاً",
 
   "detail.renew": "تجديد الاشتراك",
   "detail.renewDone": "تم تجديد الاشتراك",
@@ -590,6 +597,7 @@ const ar = {
   "payments.recordDone": "تم تسجيل الدفعة",
   "payments.history": "سجل المدفوعات",
   "payments.noPayments": "لا توجد مدفوعات مسجلة",
+  "payments.export": "تصدير المدفوعات",
   "payments.amount": "المبلغ",
   "payments.method": "طريقة الدفع",
   "payments.paidAt": "تاريخ الدفع",
