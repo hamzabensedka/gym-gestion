@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
-import { MemberInviteStatus, MemberStatus, Role } from "@prisma/client";
+import { AccessMode, MemberInviteStatus, MemberStatus, Role } from "@prisma/client";
 import { addDays, endOfDay, startOfDay } from "date-fns";
 import {
   memberSchema,
@@ -19,7 +19,12 @@ import { extendSubscription } from "@gym/shared/subscription";
 import { generateMemberQrPayload } from "@gym/shared/member-qr";
 import { normalizePhone } from "@gym/shared/format";
 import { canAddStaff } from "@gym/shared/gym-features";
-import { getPlanLimits } from "@gym/shared/plans";
+import {
+  getPlanLimits,
+  isAccessMode,
+  isPlan,
+  modesAllowedForPlan,
+} from "@gym/shared/plans";
 import { prisma } from "../db";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
 import { issueMemberInvite } from "../services/member-invite";
@@ -546,13 +551,34 @@ export const settingsRoutes = new Hono();
 settingsRoutes.get("/", requireAdmin, async (c) => {
   const gym = await prisma.gym.findUnique({
     where: { id: c.get("staff").gymId },
-    select: { plan: true },
+    select: {
+      plan: true,
+      accessMode: true,
+      planStatus: true,
+      maxStaff: true,
+      cardTheme: true,
+      onboardingCompletedAt: true,
+      name: true,
+      location: true,
+    },
   });
   if (!gym) {
     return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
   }
-  const { features } = getPlanLimits(gym.plan);
-  return c.json({ data: { plan: gym.plan, features } });
+  const limits = getPlanLimits(gym.plan);
+  return c.json({
+    data: {
+      plan: gym.plan,
+      accessMode: gym.accessMode,
+      planStatus: gym.planStatus,
+      maxStaff: gym.maxStaff,
+      features: limits.features,
+      cardTheme: gym.cardTheme ?? "default",
+      onboardingCompletedAt: gym.onboardingCompletedAt,
+      name: gym.name,
+      location: gym.location,
+    },
+  });
 });
 
 settingsRoutes.get("/gym", requireAdmin, async (c) => {
@@ -561,6 +587,27 @@ settingsRoutes.get("/gym", requireAdmin, async (c) => {
     return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
   }
   return c.json({ data: gym });
+});
+
+settingsRoutes.patch("/plan-access", requireAdmin, async (c) => {
+  const staff = c.get("staff");
+  const body = await c.req.json<{ plan?: unknown; accessMode?: unknown }>();
+  const plan = body.plan;
+  const modeRaw = body.accessMode;
+  if (!isPlan(plan) || !isAccessMode(modeRaw)) {
+    return c.json({ error: { code: "VALIDATION", message: "settings.invalidPlan" } }, 422);
+  }
+  const maxStaff = getPlanLimits(plan).maxStaff;
+  const allowed = modesAllowedForPlan(plan);
+  const accessMode = allowed.includes(modeRaw) ? modeRaw : AccessMode.DESK_ONLY;
+
+  const gym = await prisma.gym.update({
+    where: { id: staff.gymId },
+    data: { plan, maxStaff, accessMode },
+  });
+  return c.json({
+    data: { plan: gym.plan, accessMode: gym.accessMode, maxStaff: gym.maxStaff },
+  });
 });
 
 settingsRoutes.patch("/gym", requireAdmin, async (c) => {
