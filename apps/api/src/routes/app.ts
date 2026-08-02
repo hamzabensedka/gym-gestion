@@ -19,6 +19,7 @@ import { extendSubscription } from "@gym/shared/subscription";
 import { generateMemberQrPayload } from "@gym/shared/member-qr";
 import { normalizePhone } from "@gym/shared/format";
 import { canAddStaff } from "@gym/shared/gym-features";
+import { getPlanLimits } from "@gym/shared/plans";
 import { prisma } from "../db";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
 import { issueMemberInvite } from "../services/member-invite";
@@ -541,6 +542,18 @@ staffRoutes.delete("/:id", async (c) => {
 });
 
 export const settingsRoutes = new Hono();
+
+settingsRoutes.get("/", requireAdmin, async (c) => {
+  const gym = await prisma.gym.findUnique({
+    where: { id: c.get("staff").gymId },
+    select: { plan: true },
+  });
+  if (!gym) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
+  }
+  const { features } = getPlanLimits(gym.plan);
+  return c.json({ data: { plan: gym.plan, features } });
+});
 
 settingsRoutes.get("/gym", requireAdmin, async (c) => {
   const gym = await prisma.gym.findUnique({ where: { id: c.get("staff").gymId } });

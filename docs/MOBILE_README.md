@@ -64,3 +64,7 @@ npx eas build -p android
 ```
 
 See `docs/MOBILE_MIGRATION_PLAN.md` for full roadmap.
+
+## Phase A parity (2026-08-01)
+
+Mobile admin now matches web for **Charges** (utility bills) and **Boissons** (drinks): CRUD, sales, plan-gated 403, and dashboard month totals when the gym plan includes the feature.

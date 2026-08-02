@@ -16,6 +16,8 @@ import {
   paymentsRoutes,
   deskRoutes,
 } from "./routes/app";
+import { billsRoutes } from "./routes/bills";
+import { drinksRoutes } from "./routes/drinks";
 
 const app = new Hono();
 
@@ -32,6 +34,8 @@ app.route("/v1/auth", authRoutes);
 app.route("/v1/checkin", checkinRoutes);
 app.route("/v1/members", membersRoutes);
 app.route("/v1/payments", paymentsRoutes);
+app.route("/v1/bills", billsRoutes);
+app.route("/v1/drinks", drinksRoutes);
 app.route("/v1/desk", deskRoutes);
 app.route("/v1/dashboard", dashboardRoutes);
 app.route("/v1/attendance", attendanceRoutes);

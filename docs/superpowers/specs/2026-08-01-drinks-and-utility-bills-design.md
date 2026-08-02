@@ -17,7 +17,7 @@
 - Member “on credit” drink tabs  
 - Supplier management / purchase orders  
 - Complex inventory (variants, recipes, multi-warehouse)  
-- Mobile API parity (web first; API later)  
+- ~~Mobile API parity (web first; API later)~~ — **shipped Phase A** (mobile admin bills/drinks + dashboard totals)  
 - Automatic link to subscription payments  
 
 ## SaaS gating (recommended)

@@ -1,20 +1,28 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
 import { FeatherIcon, TabIcon, type TabIconName } from "@/components/icons";
 import { MoreSheet } from "@/components/more-sheet";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
+import { apiFetch } from "@/lib/api";
 import {
-  adminNav,
+  buildAdminNav,
   getMobileMore,
   getMobilePrimary,
   isNavActive,
   staffNav,
   type NavItem,
 } from "@/lib/navigation";
+import type { Plan, PlanFeature } from "@gym/shared/plans";
 import { colors } from "@/lib/theme";
+
+type GymSettings = {
+  plan: Plan;
+  features: PlanFeature[];
+};
 
 type TabBarNavigation = {
   navigate: (route: string) => void;
@@ -59,12 +67,22 @@ function TabButton({
 
 export function AppTabBar({ state, navigation, variant }: AppTabBarProps) {
   const { t } = useI18n();
-  const { logout } = useAuth();
+  const { logout, state: authState } = useAuth();
   const insets = useSafeAreaInsets();
   const [moreOpen, setMoreOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
 
-  const nav = variant === "admin" ? adminNav : staffNav;
+  const settingsQuery = useQuery({
+    queryKey: ["gym-settings-summary"],
+    queryFn: () => apiFetch<GymSettings>("/settings"),
+    enabled: variant === "admin" && authState.status === "staff",
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const nav =
+    variant === "admin"
+      ? buildAdminNav(settingsQuery.data?.features ?? [])
+      : staffNav;
   const primary = getMobilePrimary(nav);
   const moreItems = getMobileMore(nav);
   const showMoreMenu = moreItems.length > 0;
