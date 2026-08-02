@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
@@ -96,6 +96,7 @@ export default function SettingsScreen() {
     }
   }, [settingsQuery.data]);
 
+  const settingsReady = settingsQuery.isSuccess;
   const allowedModes = modesAllowedForPlan(plan);
   const previewMaxStaff = getPlanLimits(plan).maxStaff;
 
@@ -172,36 +173,57 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={styles.section}>{t("settings.subscription")}</Text>
-        <Text style={styles.fieldLabel}>{t("settings.plan")}</Text>
-        <View style={styles.row}>
-          {PLANS.map((value) => (
-            <Button
-              key={value}
-              label={t(PLAN_LABEL[value])}
-              variant={plan === value ? "primary" : "secondary"}
-              onPress={() => onPlanChange(value)}
-            />
-          ))}
-        </View>
-        <Text style={styles.hint}>{t("settings.maxStaffHint", { n: previewMaxStaff })}</Text>
+        {settingsQuery.isLoading ? (
+          <View style={styles.inlineStatus}>
+            <ActivityIndicator color={colors.brand} />
+            <Text style={styles.hint}>{t("common.loading")}</Text>
+          </View>
+        ) : settingsQuery.isError ? (
+          <Text style={styles.errorText}>
+            {settingsQuery.error instanceof Error
+              ? settingsQuery.error.message
+              : t("common.error")}
+          </Text>
+        ) : (
+          <>
+            <Text style={styles.fieldLabel}>{t("settings.plan")}</Text>
+            <View style={styles.row}>
+              {PLANS.map((value) => (
+                <Button
+                  key={value}
+                  label={t(PLAN_LABEL[value])}
+                  variant={plan === value ? "primary" : "secondary"}
+                  onPress={() => onPlanChange(value)}
+                  disabled={!settingsReady}
+                />
+              ))}
+            </View>
+            <Text style={styles.hint}>{t("settings.maxStaffHint", { n: previewMaxStaff })}</Text>
 
-        <Text style={styles.fieldLabel}>{t("settings.accessMode")}</Text>
-        <View style={styles.rowWrap}>
-          {allowedModes.map((value) => (
+            <Text style={styles.fieldLabel}>{t("settings.accessMode")}</Text>
+            <View style={styles.rowWrap}>
+              {allowedModes.map((value) => (
+                <Button
+                  key={value}
+                  label={t(MODE_LABEL[value])}
+                  variant={accessMode === value ? "primary" : "secondary"}
+                  onPress={() => setAccessMode(value)}
+                  style={styles.modeButton}
+                  disabled={!settingsReady}
+                />
+              ))}
+            </View>
             <Button
-              key={value}
-              label={t(MODE_LABEL[value])}
-              variant={accessMode === value ? "primary" : "secondary"}
-              onPress={() => setAccessMode(value)}
-              style={styles.modeButton}
+              label={t("settings.savePlanAccess")}
+              onPress={() => {
+                if (!settingsReady) return;
+                savePlanAccess.mutate();
+              }}
+              loading={savePlanAccess.isPending}
+              disabled={!settingsReady}
             />
-          ))}
-        </View>
-        <Button
-          label={t("settings.savePlanAccess")}
-          onPress={() => savePlanAccess.mutate()}
-          loading={savePlanAccess.isPending}
-        />
+          </>
+        )}
 
         <Text style={styles.section}>{t("settings.gymInfo")}</Text>
         <Input label={t("settings.gymName")} value={name} onChangeText={setName} />
@@ -298,6 +320,17 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     color: colors.textMuted,
+    marginBottom: spacing.md,
+  },
+  inlineStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.danger,
     marginBottom: spacing.md,
   },
   row: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md, flexWrap: "wrap" },
