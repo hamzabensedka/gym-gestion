@@ -1,7 +1,7 @@
 # Architecture Evolution — Gym Gestion
 
-**Date:** 2026-08-01  
-**Branch context:** `feat/saas-plans-access-modes` (Phase 1 SaaS plans shipped)  
+**Date:** 2026-08-01 (updated 2026-08-02)  
+**Branch context:** `feat/mobile-parity-phase-b` (Phase B mobile settings/export parity)  
 **Audience:** product owner / developer deciding how to grow the monorepo
 
 ---
@@ -33,6 +33,7 @@ Both stacks talk to the **same database**. Domain rules are **partly** shared (`
 - **Plans / access modes** — feature matrix in `src/lib/plans.ts` (Phase 1).
 - **Pure domain slices already extracted** — subscription extend, freeze rules, access-export CSV, peak hours, desk helpers live in shared or lib without React.
 - **API vs web separation started** — mobile does not call Next Server Actions; it uses Hono.
+- **Phase B mobile settings/export parity (2026-08-02)** — enriched `GET /v1/settings` + `PATCH /v1/settings/plan-access`; plan-gated members/payments CSV + `GET /v1/access/export`; Pro `badgeNumber` on member create/update (API + Expo); mobile settings for plan/access/theme and ShareSheet CSV.
 
 This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield mess.
 
@@ -48,8 +49,8 @@ This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield m
 | Members CRUD / renew / freeze | `src/app/actions/members.ts` | `apps/api/src/routes/app.ts` + services |
 | Dashboard | `src/lib/dashboard.ts` | `apps/api/src/services/dashboard.ts` |
 | Staff limits | `src/app/actions/staff.ts` | `apps/api` staff route (partially shared via `canAddStaff`) |
-| Badge / plans | Web has Phase 1 | API often **behind** (badge not fully wired) |
-| Plan feature gates (`assertFeature`) | Enforced on web CSV/access exports | **Mostly missing on Hono** — mobile can bypass plan locks web enforces |
+| Badge / plans | Web has Phase 1 | API + mobile wired (Phase B): Pro `badgeNumber` on create/update |
+| Plan feature gates (`assertFeature`) | Enforced on web CSV/access exports | Hono gates CSV/access exports + related settings (Phase B); other mutations still need shared use-cases |
 | Validations / auth helpers | Often `src/lib/*` local copies | Prefers `@gym/shared/*` |
 
 **Change:** One application core that both adapters call. Stop “fix in web + forget API”. Move `plans.ts` + `assertFeature` into a package both surfaces import. Delete identical duplicates (e.g. web `validations.ts` vs `@gym/shared/validations`).
@@ -194,12 +195,12 @@ Scale along **three axes**. Pick the order based on sales, not fashion.
 
 ## 6. Concrete change backlog (ordered)
 
-### Now (after Phase 1 merge)
+### Now (after Phase B merge)
 
-1. Merge SaaS plans PR; run `prisma migrate` / `db push` on staging.
-2. **API parity for Phase 1** — share `planHasFeature` / `assertFeature` on Hono exports & mutations; badge field + access export + plan fields on gym settings.
+1. Merge mobile parity Phase B; smoke plan/access settings + gated CSV/access export on Starter/Growth/Pro.
+2. **Done (Phase B):** Hono plan gates on members/payments/access CSV; Pro badge + access export; enriched settings + plan-access PATCH; Expo settings/ShareSheet.
 3. Point web imports at `@gym/shared` where files are already identical (start with `validations`).
-4. Smoke onboarding + Pro CSV on a real demo gym.
+4. Phase C next: member edit UI, invite disable, staff member QR on mobile.
 
 ### Next (hexagonal foundation — ~1 vertical slice)
 
