@@ -45,4 +45,10 @@ describe("access-export", () => {
     expect(csv).toMatch(/1001.*,1,/);
     expect(csv).toMatch(/1002.*,0,/);
   });
+
+  it("starts empty csv with BOM + header", () => {
+    const csv = buildAccessExportCsv([]);
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toContain("badgeNumber,fullName,phone,allowed,subscriptionEnd");
+  });
 });
