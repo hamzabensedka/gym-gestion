@@ -3,7 +3,7 @@ import { MemberStatus } from "@prisma/client";
 import {
   isMemberAllowedForDoor,
   buildAccessExportCsv,
-} from "@/lib/access-export";
+} from "@gym/shared/access-export";
 
 const base = {
   fullName: "Ahmed",
