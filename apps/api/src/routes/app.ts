@@ -214,11 +214,11 @@ membersRoutes.post("/", requireAdmin, async (c) => {
     return c.json({ error: { code: "VALIDATION", message: parsed.error.issues[0]?.message ?? "Données invalides" } }, 422);
   }
 
-  const gym = await prisma.gym.findUnique({
+  const gym = await prisma.gym.findUniqueOrThrow({
     where: { id: staff.gymId },
     select: { plan: true },
   });
-  const canBadge = planHasFeature(gym!.plan, "badge_numbers");
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
   const badgeNumber = canBadge
     ? normalizeBadgeNumber(parsed.data.badgeNumber)
     : null;
@@ -266,11 +266,11 @@ membersRoutes.patch("/:id", requireAdmin, async (c) => {
     return c.json({ error: { code: "VALIDATION", message: parsed.error.issues[0]?.message ?? "Données invalides" } }, 422);
   }
 
-  const gym = await prisma.gym.findUnique({
+  const gym = await prisma.gym.findUniqueOrThrow({
     where: { id: staff.gymId },
     select: { plan: true },
   });
-  const canBadge = planHasFeature(gym!.plan, "badge_numbers");
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
 
   const existing = await prisma.member.findFirst({
     where: { id, gymId: staff.gymId },
@@ -691,8 +691,11 @@ settingsRoutes.patch("/plan-access", requireAdmin, async (c) => {
   const body = await c.req.json<{ plan?: unknown; accessMode?: unknown }>();
   const plan = body.plan;
   const modeRaw = body.accessMode;
-  if (!isPlan(plan) || !isAccessMode(modeRaw)) {
+  if (!isPlan(plan)) {
     return c.json({ error: { code: "VALIDATION", message: "settings.invalidPlan" } }, 422);
+  }
+  if (!isAccessMode(modeRaw)) {
+    return c.json({ error: { code: "VALIDATION", message: "settings.invalidAccessMode" } }, 422);
   }
   const maxStaff = getPlanLimits(plan).maxStaff;
   const allowed = modesAllowedForPlan(plan);
