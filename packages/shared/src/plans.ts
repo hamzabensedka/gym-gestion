@@ -56,6 +56,17 @@ export function getPlanLimits(plan: Plan) {
   };
 }
 
+export function isPlan(value: unknown): value is Plan {
+  return typeof value === "string" && Object.values(Plan).includes(value as Plan);
+}
+
+export function isAccessMode(value: unknown): value is AccessMode {
+  return (
+    typeof value === "string" &&
+    Object.values(AccessMode).includes(value as AccessMode)
+  );
+}
+
 export function planHasFeature(plan: Plan, feature: PlanFeature): boolean {
   return PLAN_CONFIG[plan].features.includes(feature);
 }

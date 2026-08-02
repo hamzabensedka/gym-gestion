@@ -23,6 +23,9 @@
     },
     "expo-sharing": {
       "expo": "~54.0.35"
+    },
+    "expo-file-system": {
+      "expo": "~54.0.35"
     }
   },
   "scripts": {

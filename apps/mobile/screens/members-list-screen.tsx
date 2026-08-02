@@ -4,8 +4,10 @@ import { Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n-context";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiText } from "@/lib/api";
+import { shareCsv } from "@/lib/share-csv";
 import { Badge, Button, Input, Title } from "@/components/ui";
+import { NoticeDialog } from "@/components/confirm-dialog";
 import { colors, spacing } from "@/lib/theme";
 import { formatDate } from "@gym/shared/format";
 import { daysUntil } from "@gym/shared/subscription";
@@ -19,6 +21,10 @@ type Member = {
   subscriptionEnd: string;
 };
 
+type SettingsSnapshot = {
+  features: string[];
+};
+
 const filters = ["all", "active", "expired", "expiring", "frozen"] as const;
 
 type MembersListScreenProps = {
@@ -30,11 +36,19 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
   const { t, locale } = useI18n();
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
   const [q, setQ] = useState("");
+  const [exporting, setExporting] = useState<"members" | "access" | null>(null);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["members", filter, q],
     queryFn: () =>
       apiFetch<Member[]>(`/members?f=${filter}${q ? `&q=${encodeURIComponent(q)}` : ""}`),
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => apiFetch<SettingsSnapshot>("/settings"),
+    enabled: isAdmin,
   });
 
   const { data: gymName = "Gym" } = useQuery({
@@ -51,6 +65,34 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
     enabled: isAdmin,
   });
 
+  const features = settings?.features ?? [];
+  const canCsv = isAdmin && features.includes("csv_export");
+  const canAccess = isAdmin && features.includes("access_export");
+
+  async function exportMembers() {
+    setExporting("members");
+    try {
+      const csv = await apiText("/members/export");
+      await shareCsv("members.csv", csv);
+    } catch (e) {
+      setErrorNotice(e instanceof Error ? e.message : t("common.error"));
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function exportAccess() {
+    setExporting("access");
+    try {
+      const csv = await apiText("/access/export");
+      await shareCsv("access.csv", csv);
+    } catch (e) {
+      setErrorNotice(e instanceof Error ? e.message : t("common.error"));
+    } finally {
+      setExporting(null);
+    }
+  }
+
   const filterLabels: Record<(typeof filters)[number], string> = {
     all: t("members.filterAll"),
     active: t("members.filterActive"),
@@ -64,9 +106,31 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
       <View style={styles.header}>
         <Title>{t("members.title")}</Title>
         {isAdmin ? (
-          <Link href="/(admin)/members/new" asChild>
-            <Button label={t("members.addMember")} onPress={() => {}} />
-          </Link>
+          <View style={styles.headerActions}>
+            {canCsv ? (
+              <Button
+                label={t("members.export")}
+                variant="outline"
+                size="sm"
+                onPress={exportMembers}
+                loading={exporting === "members"}
+                disabled={exporting !== null}
+              />
+            ) : null}
+            {canAccess ? (
+              <Button
+                label={t("members.exportAccess")}
+                variant="outline"
+                size="sm"
+                onPress={exportAccess}
+                loading={exporting === "access"}
+                disabled={exporting !== null}
+              />
+            ) : null}
+            <Link href="/(admin)/members/new" asChild>
+              <Button label={t("members.addMember")} onPress={() => {}} />
+            </Link>
+          </View>
         ) : null}
       </View>
 
@@ -161,6 +225,15 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
           }}
         />
       )}
+
+      <NoticeDialog
+        visible={errorNotice !== null}
+        onClose={() => setErrorNotice(null)}
+        title={t("common.error")}
+        description={errorNotice ?? undefined}
+        tone="critical"
+        confirmLabel={t("common.ok")}
+      />
     </SafeAreaView>
   );
 }
@@ -168,6 +241,7 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg, padding: spacing.md },
   header: { gap: spacing.sm, marginBottom: spacing.sm },
+  headerActions: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, alignItems: "center" },
   filters: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.md },
   chip: {
     paddingHorizontal: 12,

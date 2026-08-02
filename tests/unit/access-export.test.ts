@@ -3,7 +3,7 @@ import { MemberStatus } from "@prisma/client";
 import {
   isMemberAllowedForDoor,
   buildAccessExportCsv,
-} from "@/lib/access-export";
+} from "@gym/shared/access-export";
 
 const base = {
   fullName: "Ahmed",
@@ -44,5 +44,11 @@ describe("access-export", () => {
     expect(csv).toContain("1001");
     expect(csv).toMatch(/1001.*,1,/);
     expect(csv).toMatch(/1002.*,0,/);
+  });
+
+  it("starts empty csv with BOM + header", () => {
+    const csv = buildAccessExportCsv([]);
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toContain("badgeNumber,fullName,phone,allowed,subscriptionEnd");
   });
 });

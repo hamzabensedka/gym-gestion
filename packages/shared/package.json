@@ -21,7 +21,9 @@
     "./gym-features": "./src/gym-features.ts",
     "./plans": "./src/plans.ts",
     "./bills": "./src/bills.ts",
-    "./drinks": "./src/drinks.ts"
+    "./drinks": "./src/drinks.ts",
+    "./access-export": "./src/access-export.ts",
+    "./badge": "./src/badge.ts"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

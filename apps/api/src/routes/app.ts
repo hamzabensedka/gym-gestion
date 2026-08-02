@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
-import { MemberInviteStatus, MemberStatus, Role } from "@prisma/client";
+import { AccessMode, MemberInviteStatus, MemberStatus, Prisma, Role } from "@prisma/client";
 import { addDays, endOfDay, startOfDay } from "date-fns";
 import {
   memberSchema,
@@ -19,8 +19,17 @@ import { extendSubscription } from "@gym/shared/subscription";
 import { generateMemberQrPayload } from "@gym/shared/member-qr";
 import { normalizePhone } from "@gym/shared/format";
 import { canAddStaff } from "@gym/shared/gym-features";
-import { getPlanLimits } from "@gym/shared/plans";
+import { buildAccessExportCsv } from "@gym/shared/access-export";
+import { normalizeBadgeNumber } from "@gym/shared/badge";
+import {
+  getPlanLimits,
+  isAccessMode,
+  isPlan,
+  modesAllowedForPlan,
+  planHasFeature,
+} from "@gym/shared/plans";
 import { prisma } from "../db";
+import { assertGymFeature, featureLockedResponse, isFeatureLockedError } from "../lib/features";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
 import { issueMemberInvite } from "../services/member-invite";
 
@@ -31,6 +40,24 @@ function parseDate(value: string) {
 function normalizeEmail(value?: string) {
   const trimmed = value?.trim();
   return trimmed ? trimmed.toLowerCase() : null;
+}
+
+function uniqueConflictError(error: unknown): "form.badgeExists" | "form.phoneExists" {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    const target = error.meta?.target;
+    const fields = Array.isArray(target)
+      ? target.map(String)
+      : typeof target === "string"
+        ? [target]
+        : [];
+    if (fields.some((f) => f.includes("badgeNumber"))) {
+      return "form.badgeExists";
+    }
+  }
+  return "form.phoneExists";
 }
 
 export const membersRoutes = new Hono();
@@ -66,6 +93,15 @@ membersRoutes.get("/search", requireCheckinAccess, async (c) => {
 
 membersRoutes.get("/export", requireAdmin, async (c) => {
   const staff = c.get("staff");
+  try {
+    await assertGymFeature(staff.gymId, "csv_export");
+  } catch (error) {
+    if (isFeatureLockedError(error)) {
+      return featureLockedResponse(c);
+    }
+    throw error;
+  }
+
   const members = await prisma.member.findMany({
     where: withOnboardedMemberFilter({ gymId: staff.gymId }),
     orderBy: { fullName: "asc" },
@@ -178,6 +214,15 @@ membersRoutes.post("/", requireAdmin, async (c) => {
     return c.json({ error: { code: "VALIDATION", message: parsed.error.issues[0]?.message ?? "Données invalides" } }, 422);
   }
 
+  const gym = await prisma.gym.findUniqueOrThrow({
+    where: { id: staff.gymId },
+    select: { plan: true },
+  });
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
+  const badgeNumber = canBadge
+    ? normalizeBadgeNumber(parsed.data.badgeNumber)
+    : null;
+
   const subscriptionEnd = parseDate(parsed.data.subscriptionEnd);
   const email = normalizeEmail(parsed.data.email);
   const sendInvite = Boolean(body.sendInvite);
@@ -194,6 +239,7 @@ membersRoutes.post("/", requireAdmin, async (c) => {
         status: getMemberStatus(subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        badgeNumber: canBadge ? badgeNumber : null,
         inviteStatus: email && sendInvite ? MemberInviteStatus.PENDING : null,
       },
     });
@@ -206,8 +252,8 @@ membersRoutes.post("/", requireAdmin, async (c) => {
     }
 
     return c.json({ data: { id: created.id } }, 201);
-  } catch {
-    return c.json({ error: { code: "CONFLICT", message: "form.phoneExists" } }, 409);
+  } catch (error) {
+    return c.json({ error: { code: "CONFLICT", message: uniqueConflictError(error) } }, 409);
   }
 });
 
@@ -219,6 +265,12 @@ membersRoutes.patch("/:id", requireAdmin, async (c) => {
   if (!parsed.success) {
     return c.json({ error: { code: "VALIDATION", message: parsed.error.issues[0]?.message ?? "Données invalides" } }, 422);
   }
+
+  const gym = await prisma.gym.findUniqueOrThrow({
+    where: { id: staff.gymId },
+    select: { plan: true },
+  });
+  const canBadge = planHasFeature(gym.plan, "badge_numbers");
 
   const existing = await prisma.member.findFirst({
     where: { id, gymId: staff.gymId },
@@ -245,10 +297,13 @@ membersRoutes.patch("/:id", requireAdmin, async (c) => {
         status: resolveMemberStatusOnSubscriptionChange(existing.status, subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        ...(canBadge
+          ? { badgeNumber: normalizeBadgeNumber(parsed.data.badgeNumber) }
+          : {}),
       },
     });
-  } catch {
-    return c.json({ error: { code: "CONFLICT", message: "form.phoneExists" } }, 409);
+  } catch (error) {
+    return c.json({ error: { code: "CONFLICT", message: uniqueConflictError(error) } }, 409);
   }
 
   if (email && (sendInvite || emailChanged) && existing.inviteStatus !== MemberInviteStatus.ACTIVE) {
@@ -410,6 +465,15 @@ paymentsRoutes.get("/", async (c) => {
 
 paymentsRoutes.get("/export", async (c) => {
   const staff = c.get("staff");
+  try {
+    await assertGymFeature(staff.gymId, "csv_export");
+  } catch (error) {
+    if (isFeatureLockedError(error)) {
+      return featureLockedResponse(c);
+    }
+    throw error;
+  }
+
   const { listPayments } = await import("../services/payments");
   const { format } = await import("date-fns");
   const from = c.req.query("from") ?? undefined;
@@ -459,6 +523,44 @@ paymentsRoutes.get("/export", async (c) => {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="paiements-${format(new Date(), "yyyy-MM-dd")}.csv"`,
     },
+  });
+});
+
+export const accessRoutes = new Hono();
+
+accessRoutes.get("/export", requireAdmin, async (c) => {
+  const staff = c.get("staff");
+  try {
+    await assertGymFeature(staff.gymId, "access_export");
+  } catch (error) {
+    if (isFeatureLockedError(error)) {
+      return featureLockedResponse(c);
+    }
+    throw error;
+  }
+
+  const members = await prisma.member.findMany({
+    where: { gymId: staff.gymId, badgeNumber: { not: null } },
+    select: {
+      fullName: true,
+      phone: true,
+      badgeNumber: true,
+      status: true,
+      subscriptionEnd: true,
+      frozenAt: true,
+    },
+    orderBy: { fullName: "asc" },
+  });
+
+  const csv = buildAccessExportCsv(members);
+  await prisma.gym.update({
+    where: { id: staff.gymId },
+    data: { lastAccessExportAt: new Date() },
+  });
+
+  return c.text(csv, 200, {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": 'attachment; filename="access-allowed.csv"',
   });
 });
 
@@ -546,13 +648,34 @@ export const settingsRoutes = new Hono();
 settingsRoutes.get("/", requireAdmin, async (c) => {
   const gym = await prisma.gym.findUnique({
     where: { id: c.get("staff").gymId },
-    select: { plan: true },
+    select: {
+      plan: true,
+      accessMode: true,
+      planStatus: true,
+      maxStaff: true,
+      cardTheme: true,
+      onboardingCompletedAt: true,
+      name: true,
+      location: true,
+    },
   });
   if (!gym) {
     return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
   }
-  const { features } = getPlanLimits(gym.plan);
-  return c.json({ data: { plan: gym.plan, features } });
+  const limits = getPlanLimits(gym.plan);
+  return c.json({
+    data: {
+      plan: gym.plan,
+      accessMode: gym.accessMode,
+      planStatus: gym.planStatus,
+      maxStaff: gym.maxStaff,
+      features: limits.features,
+      cardTheme: gym.cardTheme ?? "default",
+      onboardingCompletedAt: gym.onboardingCompletedAt,
+      name: gym.name,
+      location: gym.location,
+    },
+  });
 });
 
 settingsRoutes.get("/gym", requireAdmin, async (c) => {
@@ -561,6 +684,30 @@ settingsRoutes.get("/gym", requireAdmin, async (c) => {
     return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
   }
   return c.json({ data: gym });
+});
+
+settingsRoutes.patch("/plan-access", requireAdmin, async (c) => {
+  const staff = c.get("staff");
+  const body = await c.req.json<{ plan?: unknown; accessMode?: unknown }>();
+  const plan = body.plan;
+  const modeRaw = body.accessMode;
+  if (!isPlan(plan)) {
+    return c.json({ error: { code: "VALIDATION", message: "settings.invalidPlan" } }, 422);
+  }
+  if (!isAccessMode(modeRaw)) {
+    return c.json({ error: { code: "VALIDATION", message: "settings.invalidAccessMode" } }, 422);
+  }
+  const maxStaff = getPlanLimits(plan).maxStaff;
+  const allowed = modesAllowedForPlan(plan);
+  const accessMode = allowed.includes(modeRaw) ? modeRaw : AccessMode.DESK_ONLY;
+
+  const gym = await prisma.gym.update({
+    where: { id: staff.gymId },
+    data: { plan, maxStaff, accessMode },
+  });
+  return c.json({
+    data: { plan: gym.plan, accessMode: gym.accessMode, maxStaff: gym.maxStaff },
+  });
 });
 
 settingsRoutes.patch("/gym", requireAdmin, async (c) => {

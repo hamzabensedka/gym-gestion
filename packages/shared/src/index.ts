@@ -14,3 +14,5 @@ export * from "./gym-features";
 export * from "./plans";
 export * from "./bills";
 export * from "./drinks";
+export * from "./access-export";
+export * from "./badge";

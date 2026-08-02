@@ -28,8 +28,8 @@
 
 | Area | Gap |
 |------|-----|
-| Money | Bills + drinks (web Server Actions only; no API) |
-| SaaS | Plan/access edit, card theme UI, badge numbers, access CSV, CSV share UI; API plan gates missing |
+| Money | **Phase A done** — bills + drinks API + mobile |
+| SaaS | **Phase B done** — plan/access/theme settings, badge numbers, gated CSV + access export, ShareSheet |
 | Core | Member edit UI, invite disable, staff view of member QR |
 | Growth | Real kiosk (web is placeholder); mobile onboarding optional |
 
@@ -109,6 +109,8 @@ Payloads mirror web actions (`createBillAction`, `sellDrinkAction`, etc.): amoun
 ---
 
 ## Phase B — SaaS / settings parity
+
+**Status:** Done (2026-08-02, `feat/mobile-parity-phase-b`)
 
 ### API
 

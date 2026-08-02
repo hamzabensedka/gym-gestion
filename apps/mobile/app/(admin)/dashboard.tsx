@@ -2,16 +2,18 @@ import { ScrollView, StyleSheet, Text, View, Linking } from "react-native";
 import { useState } from "react";
 import { Link, router } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, startOfMonth } from "date-fns";
 import { FeatherIcon } from "@/components/icons";
 import { useI18n } from "@/lib/i18n-context";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiText } from "@/lib/api";
+import { shareCsv } from "@/lib/share-csv";
 import { Badge, Button, Card, CardTitle, ListRow, PageHeader, StatCard } from "@/components/ui";
 import { colors, spacing } from "@/lib/theme";
 import { formatCurrency, formatDate } from "@gym/shared/format";
 import { formatPeakHourRange } from "@gym/shared/peak-hours";
 import { buildWhatsappUrl } from "@gym/shared/subscription";
 import { BulkWhatsappBar } from "@/components/bulk-whatsapp";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog";
 import type { ActionItem, ActionItemCategory, ActionItemsData } from "@gym/shared/dashboard-actions";
 import {
   formatPercentChange,
@@ -19,6 +21,10 @@ import {
   type DashboardTrends,
 } from "@gym/shared/dashboard-trends";
 import type { TranslationKey } from "@gym/shared/i18n";
+
+type SettingsSnapshot = {
+  features: string[];
+};
 
 type DashboardData = {
   gymName: string;
@@ -107,6 +113,11 @@ export default function DashboardScreen() {
     queryFn: () => apiFetch<DashboardData>("/dashboard"),
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => apiFetch<SettingsSnapshot>("/settings"),
+  });
+
   const renew = useMutation({
     mutationFn: (memberId: string) =>
       apiFetch(`/members/${memberId}/renew`, {
@@ -120,6 +131,24 @@ export default function DashboardScreen() {
   });
 
   const [renewTarget, setRenewTarget] = useState<{ id: string; name: string } | null>(null);
+  const [exportingPayments, setExportingPayments] = useState(false);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
+
+  const canCsv = (settings?.features ?? []).includes("csv_export");
+
+  async function exportPayments() {
+    setExportingPayments(true);
+    try {
+      const from = format(startOfMonth(new Date()), "yyyy-MM-dd");
+      const to = format(new Date(), "yyyy-MM-dd");
+      const csv = await apiText(`/payments/export?from=${from}&to=${to}`);
+      await shareCsv("payments.csv", csv);
+    } catch (e) {
+      setErrorNotice(e instanceof Error ? e.message : t("common.error"));
+    } finally {
+      setExportingPayments(false);
+    }
+  }
 
   function whatsappMessage(item: ActionItem, gymName: string) {
     const date = formatDate(item.subscriptionEnd, locale);
@@ -450,9 +479,20 @@ export default function DashboardScreen() {
         </Card>
 
         <Card>
-          <View style={styles.cardHeading}>
-            <FeatherIcon name="credit-card" size={20} color={colors.brand} />
-            <CardTitle>{t("dash.recentPayments")}</CardTitle>
+          <View style={styles.paymentsHeading}>
+            <View style={[styles.cardHeading, { marginBottom: 0 }]}>
+              <FeatherIcon name="credit-card" size={20} color={colors.brand} />
+              <CardTitle>{t("dash.recentPayments")}</CardTitle>
+            </View>
+            {canCsv ? (
+              <Button
+                label={t("payments.export")}
+                variant="outline"
+                size="sm"
+                onPress={exportPayments}
+                loading={exportingPayments}
+              />
+            ) : null}
           </View>
           {data.recentPayments.length === 0 ? (
             <Text style={styles.empty}>{t("dash.noPayments")}</Text>
@@ -490,6 +530,15 @@ export default function DashboardScreen() {
         onConfirm={() => {
           if (renewTarget) renew.mutate(renewTarget.id);
         }}
+      />
+
+      <NoticeDialog
+        visible={errorNotice !== null}
+        onClose={() => setErrorNotice(null)}
+        title={t("common.error")}
+        description={errorNotice ?? undefined}
+        tone="critical"
+        confirmLabel={t("common.ok")}
       />
     </View>
   );
@@ -574,6 +623,14 @@ const styles = StyleSheet.create({
   bar: { width: 20, backgroundColor: colors.brand, borderRadius: 4 },
   barLabel: { fontSize: 11, color: colors.mutedForeground, marginTop: 4, fontVariant: ["tabular-nums"] },
   cardHeading: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm },
+  paymentsHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    flexWrap: "wrap",
+  },
   sectionSub: { fontSize: 12, color: colors.mutedForeground, marginTop: 2 },
   actionsCard: { borderLeftWidth: 4, borderLeftColor: colors.critical },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.md },
