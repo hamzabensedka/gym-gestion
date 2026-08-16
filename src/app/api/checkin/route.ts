@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { performCheckin, parseMemberIdFromQr } from "@/lib/checkin";
+import { performCheckinFromInput } from "@/lib/checkin";
 import { getSession } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -8,16 +8,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const body = (await request.json()) as { memberId?: string; qrData?: string };
-  const memberId = body.memberId ?? parseMemberIdFromQr(body.qrData ?? "");
+  const body = (await request.json()) as {
+    memberId?: string;
+    qrData?: string;
+    code?: string;
+  };
+  const result = await performCheckinFromInput(session.gymId, body);
 
-  if (!memberId) {
+  if (result.outcome === "INVALID") {
     return NextResponse.json(
       { success: false, outcome: "INVALID" },
       { status: 400 },
     );
   }
 
-  const result = await performCheckin(session.gymId, memberId);
-  return NextResponse.json(result, { status: result.success ? 200 : 200 });
+  return NextResponse.json(result, { status: 200 });
 }

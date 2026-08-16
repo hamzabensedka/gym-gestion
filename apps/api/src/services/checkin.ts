@@ -1,15 +1,19 @@
 import { MemberStatus } from "@prisma/client";
 import { prisma } from "../db";
-import { getMemberStatus, isMemberActive } from "@gym/shared/auth";
-import { isMemberFrozen } from "@gym/shared/freeze";
+import { getMemberStatus } from "@gym/shared/auth";
 import { daysUntil } from "@gym/shared/subscription";
+import { normalizePhone } from "@gym/shared/format";
+import { normalizeBadgeNumber } from "@gym/shared/badge";
+import {
+  decideCheckinOutcome,
+  parseMemberIdFromQr,
+  resolveCheckinToken,
+  type CheckinInput,
+  type CheckinOutcome,
+} from "@gym/shared/checkin";
 
-export type CheckinOutcome =
-  | "GRANTED"
-  | "EXPIRED"
-  | "FROZEN"
-  | "NOT_FOUND"
-  | "INVALID";
+export type { CheckinOutcome };
+export { parseMemberIdFromQr, resolveCheckinToken, decideCheckinOutcome };
 
 export type CheckinResult = {
   success: boolean;
@@ -40,27 +44,74 @@ export async function syncMemberStatuses(gymId: string) {
   );
 }
 
-export async function performCheckin(
-  gymId: string,
-  memberId: string,
-): Promise<CheckinResult> {
-  const member = await prisma.member.findFirst({
-    where: { id: memberId, gymId },
+async function findMemberForCheckin(gymId: string, token: string) {
+  const byId = await prisma.member.findFirst({
+    where: { id: token, gymId },
   });
+  if (byId) return byId;
 
-  if (!member) {
+  const phone = normalizePhone(token);
+  if (phone) {
+    const byPhone = await prisma.member.findFirst({
+      where: { gymId, phone },
+    });
+    if (byPhone) return byPhone;
+  }
+
+  const badge = normalizeBadgeNumber(token);
+  if (badge) {
+    const byBadge = await prisma.member.findFirst({
+      where: { gymId, badgeNumber: badge },
+    });
+    if (byBadge) return byBadge;
+  }
+
+  return null;
+}
+
+function toResult(
+  outcome: CheckinOutcome,
+  member?: {
+    id: string;
+    fullName: string;
+    status: MemberStatus;
+    subscriptionEnd: Date;
+  },
+  daysLeft?: number,
+): CheckinResult {
+  if (!member || outcome === "NOT_FOUND" || outcome === "INVALID") {
+    return { success: false, outcome };
+  }
+
+  return {
+    success: outcome === "GRANTED",
+    outcome,
+    memberName: member.fullName,
+    memberId: member.id,
+    status: member.status,
+    daysLeft,
+    subscriptionEnd: member.subscriptionEnd.toISOString(),
+  };
+}
+
+export async function performCheckinFromInput(
+  gymId: string,
+  input: CheckinInput,
+): Promise<CheckinResult> {
+  const token = resolveCheckinToken(input);
+  if (!token) {
+    return { success: false, outcome: "INVALID" };
+  }
+
+  const member = await findMemberForCheckin(gymId, token);
+  const outcome = decideCheckinOutcome(member);
+
+  if (!member || outcome === "NOT_FOUND") {
     return { success: false, outcome: "NOT_FOUND" };
   }
 
-  if (isMemberFrozen(member.status)) {
-    return {
-      success: false,
-      outcome: "FROZEN",
-      memberName: member.fullName,
-      memberId: member.id,
-      status: MemberStatus.FROZEN,
-      subscriptionEnd: member.subscriptionEnd.toISOString(),
-    };
+  if (outcome === "FROZEN") {
+    return toResult("FROZEN", member);
   }
 
   const status = getMemberStatus(member.subscriptionEnd);
@@ -69,42 +120,27 @@ export async function performCheckin(
       where: { id: member.id },
       data: { status },
     });
+    member.status = status;
   }
 
-  if (!isMemberActive(member.subscriptionEnd)) {
-    return {
-      success: false,
-      outcome: "EXPIRED",
-      memberName: member.fullName,
-      memberId: member.id,
-      status: MemberStatus.EXPIRED,
-      subscriptionEnd: member.subscriptionEnd.toISOString(),
-    };
+  if (outcome === "EXPIRED") {
+    return toResult("EXPIRED", { ...member, status: MemberStatus.EXPIRED });
   }
 
   await prisma.checkin.create({
     data: { memberId: member.id, gymId },
   });
 
-  return {
-    success: true,
-    outcome: "GRANTED",
-    memberName: member.fullName,
-    memberId: member.id,
-    status: MemberStatus.ACTIVE,
-    daysLeft: daysUntil(member.subscriptionEnd),
-    subscriptionEnd: member.subscriptionEnd.toISOString(),
-  };
+  return toResult(
+    "GRANTED",
+    { ...member, status: MemberStatus.ACTIVE },
+    daysUntil(member.subscriptionEnd),
+  );
 }
 
-export function parseMemberIdFromQr(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  try {
-    const parsed = JSON.parse(trimmed) as { memberId?: string; id?: string };
-    return parsed.memberId ?? parsed.id ?? null;
-  } catch {
-    return trimmed;
-  }
+export async function performCheckin(
+  gymId: string,
+  memberId: string,
+): Promise<CheckinResult> {
+  return performCheckinFromInput(gymId, { memberId });
 }
