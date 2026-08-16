@@ -41,6 +41,7 @@ function RootNavigator() {
   }
 
   const inAuth = segments[0] === "(auth)";
+  const inKiosk = segments[0] === "kiosk";
 
   if (state.status === "guest" && !inAuth) {
     return <Redirect href="/(auth)/login" />;
@@ -51,7 +52,7 @@ function RootNavigator() {
     return <Redirect href={route} />;
   }
 
-  if (state.status === "member" && inAuth) {
+  if (state.status === "member" && (inAuth || inKiosk)) {
     return <Redirect href="/(member)" />;
   }
 
@@ -61,6 +62,7 @@ function RootNavigator() {
       <Stack.Screen name="(staff)" />
       <Stack.Screen name="(admin)" />
       <Stack.Screen name="(member)" />
+      <Stack.Screen name="kiosk" options={{ animation: "fade", gestureEnabled: false }} />
     </Stack>
   );
 }

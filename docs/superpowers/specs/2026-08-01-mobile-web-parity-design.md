@@ -31,7 +31,7 @@
 | Money | **Phase A done** — bills + drinks API + mobile |
 | SaaS | **Phase B done** — plan/access/theme settings, badge numbers, gated CSV + access export, ShareSheet |
 | Core | **Phase C done** |
-| Growth | Real kiosk (web is placeholder); mobile onboarding optional |
+| Growth | **Phase D done** — real kiosk (web + mobile); mobile onboarding still optional/deferred |
 
 ## Architecture (Approach 1 — API-first)
 
@@ -155,14 +155,14 @@ No new domain tables. Small PRs preferred. Phase D stays out.
 
 ## Phase D — Kiosk (+ optional onboarding)
 
+**Status:** Kiosk done (2026-08-16, `feat/mobile-parity-phase-d`). Mobile onboarding wizard **out** of this PR.
+
 | Item | Work |
 |------|------|
-| Shared check-in use-case | Extract if needed so kiosk + desk share rules |
+| Shared check-in use-case | Pure parse/decide/token in `@gym/shared/checkin`; web + API Prisma wrappers |
 | Kiosk UX | Growth+ gated; self-service check-in loop (camera or member code); idle timeout |
-| Surfaces | Finish web `/kiosk` placeholder **and** add mobile kiosk entry (tablet-friendly) |
-| Onboarding | Optional mobile wizard mirroring web if `onboardingCompletedAt` is null |
-
-Kiosk is not a toy screen: must call the same check-in service as desk scan.
+| Surfaces | Web `/kiosk` + Expo `/kiosk`; Starter locked |
+| Onboarding | Deferred — web wizard remains; mobile settings already edit plan/access |
 
 ---
 
