@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { FeatherIcon } from "@/components/icons";
+import { MemberQrView } from "@/components/member-qr-view";
 import { useI18n } from "@/lib/i18n-context";
 import { apiFetch } from "@/lib/api";
 import { colors, spacing } from "@/lib/theme";
@@ -42,13 +42,10 @@ export default function MemberQrScreen() {
         <Text style={styles.title}>{t("member.qr.title")}</Text>
         <Text style={styles.hint}>{t("member.qr.brightnessHint")}</Text>
 
-        {!data.isActive ? (
-          <Text style={styles.expired}>{t("member.qr.expiredBanner")}</Text>
-        ) : null}
-
-        <View style={styles.qrWrap}>
-          <QRCode value={data.qrData} size={240} backgroundColor="#ffffff" color="#000000" />
-        </View>
+        <MemberQrView
+          value={data.qrData}
+          expiredBanner={!data.isActive ? t("member.qr.expiredBanner") : null}
+        />
       </View>
     </View>
   );
@@ -71,13 +68,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.lg },
   title: { fontSize: 22, fontWeight: "700", color: colors.foreground, marginBottom: spacing.sm },
   hint: { fontSize: 14, color: colors.mutedForeground, marginBottom: spacing.lg, textAlign: "center" },
-  expired: { color: colors.error, marginBottom: spacing.md, fontWeight: "500", textAlign: "center" },
-  qrWrap: {
-    padding: spacing.lg,
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   loading: { padding: spacing.lg, color: colors.mutedForeground },
 });

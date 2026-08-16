@@ -285,6 +285,19 @@ export function MemberDetailScreen({
         />
       </Card>
 
+      <Button
+        label={t("detail.qrTitle")}
+        variant="secondary"
+        onPress={() =>
+          router.push(
+            membersListRoute === "/(staff)/members"
+              ? `/(staff)/members/${id}/qr`
+              : `/(admin)/members/${id}/qr`,
+          )
+        }
+        style={{ marginBottom: spacing.md }}
+      />
+
       <View style={styles.actionRow}>
         <Button
           label={t("detail.whatsapp")}
