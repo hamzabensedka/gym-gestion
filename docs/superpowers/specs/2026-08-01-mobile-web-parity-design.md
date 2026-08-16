@@ -30,7 +30,7 @@
 |------|-----|
 | Money | **Phase A done** — bills + drinks API + mobile |
 | SaaS | **Phase B done** — plan/access/theme settings, badge numbers, gated CSV + access export, ShareSheet |
-| Core | **Phase C specified** — see `docs/superpowers/specs/2026-08-16-mobile-parity-phase-c-core-leftovers-design.md` |
+| Core | **Phase C done** |
 | Growth | Real kiosk (web is placeholder); mobile onboarding optional |
 
 ## Architecture (Approach 1 — API-first)
@@ -140,7 +140,7 @@ Payloads mirror web actions (`createBillAction`, `sellDrinkAction`, etc.): amoun
 
 ## Phase C — Core leftovers
 
-**Status:** Specified (2026-08-16) — `docs/superpowers/specs/2026-08-16-mobile-parity-phase-c-core-leftovers-design.md`
+**Status:** Done (2026-08-16, feat/mobile-parity-phase-c)
 
 | Item | Work |
 |------|------|

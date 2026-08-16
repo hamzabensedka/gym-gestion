@@ -1,7 +1,7 @@
 # Architecture Evolution — Gym Gestion
 
-**Date:** 2026-08-01 (updated 2026-08-02)  
-**Branch context:** `feat/mobile-parity-phase-b` (Phase B mobile settings/export parity)  
+**Date:** 2026-08-16  
+**Branch context:** `feat/mobile-parity-phase-c`  
 **Audience:** product owner / developer deciding how to grow the monorepo
 
 ---
@@ -34,6 +34,7 @@ Both stacks talk to the **same database**. Domain rules are **partly** shared (`
 - **Pure domain slices already extracted** — subscription extend, freeze rules, access-export CSV, peak hours, desk helpers live in shared or lib without React.
 - **API vs web separation started** — mobile does not call Next Server Actions; it uses Hono.
 - **Phase B mobile settings/export parity (2026-08-02)** — enriched `GET /v1/settings` + `PATCH /v1/settings/plan-access`; plan-gated members/payments CSV + `GET /v1/access/export`; Pro `badgeNumber` on member create/update (API + Expo); mobile settings for plan/access/theme and ShareSheet CSV.
+- **Phase C mobile core leftovers (2026-08-16)** — admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
 
 This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield mess.
 
@@ -200,7 +201,8 @@ Scale along **three axes**. Pick the order based on sales, not fashion.
 1. Merge mobile parity Phase B; smoke plan/access settings + gated CSV/access export on Starter/Growth/Pro.
 2. **Done (Phase B):** Hono plan gates on members/payments/access CSV; Pro badge + access export; enriched settings + plan-access PATCH; Expo settings/ShareSheet.
 3. Point web imports at `@gym/shared` where files are already identical (start with `validations`).
-4. Phase C next: member edit UI, invite disable, staff member QR on mobile.
+4. **Done (Phase C):** admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
+5. Phase D next: kiosk self check-in (Growth+).
 
 ### Next (hexagonal foundation — ~1 vertical slice)
 
