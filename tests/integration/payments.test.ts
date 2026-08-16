@@ -107,8 +107,17 @@ describe("payments integration", () => {
   it("sums collected revenue in date range", async () => {
     const member = await createTestMember();
     const now = new Date();
+    const thisMonthFrom = startOfMonth(now);
+    const thisMonthTo = endOfMonth(now);
+    const lastMonthFrom = startOfMonth(subMonths(now, 1));
+    const lastMonthTo = endOfMonth(subMonths(now, 1));
     const thisMonthPaidAt = format(now, "yyyy-MM-dd");
     const lastMonthPaidAt = format(subMonths(now, 1), "yyyy-MM-dd");
+
+    // Seed writes gym payments with paidAt relative to now; they often land
+    // in the current calendar month. Assert deltas, not an empty month.
+    const thisMonthBefore = await sumCollectedInRange(gymId, thisMonthFrom, thisMonthTo);
+    const lastMonthBefore = await sumCollectedInRange(gymId, lastMonthFrom, lastMonthTo);
 
     await createPayment(gymId, member.id, adminId, {
       amount: 80,
@@ -121,12 +130,11 @@ describe("payments integration", () => {
       paidAt: lastMonthPaidAt,
     });
 
-    const thisMonth = await sumCollectedInRange(
-      gymId,
-      startOfMonth(now),
-      endOfMonth(now),
-    );
-    expect(thisMonth).toBe(80);
+    const thisMonth = await sumCollectedInRange(gymId, thisMonthFrom, thisMonthTo);
+    expect(thisMonth).toBe(thisMonthBefore + 80);
+
+    const lastMonth = await sumCollectedInRange(gymId, lastMonthFrom, lastMonthTo);
+    expect(lastMonth).toBe(lastMonthBefore + 40);
 
     const all = await listPayments(gymId);
     expect(all.length).toBeGreaterThanOrEqual(2);

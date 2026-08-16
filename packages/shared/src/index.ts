@@ -16,3 +16,4 @@ export * from "./bills";
 export * from "./drinks";
 export * from "./access-export";
 export * from "./badge";
+export * from "./invite-access";

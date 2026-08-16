@@ -11,6 +11,7 @@ import { FeatherIcon } from "@/components/icons";
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog";
 import { colors, spacing } from "@/lib/theme";
 import { formatDate, formatCurrency } from "@gym/shared/format";
+import { inviteAccessLabel } from "@gym/shared/invite-access";
 import { buildWhatsappUrl } from "@gym/shared/subscription";
 import { paymentMethods } from "@gym/shared/validations";
 import type { TranslationKey } from "@gym/shared/i18n";
@@ -28,6 +29,8 @@ type MemberDetail = {
   monthlyFee: string;
   notes: string | null;
   inviteStatus: string | null;
+  inviteExpiresAt: string | null;
+  badgeNumber: string | null;
   checkins: Array<{ id: string; timestamp: string }>;
 };
 
@@ -78,6 +81,7 @@ export function MemberDetailScreen({
   const [freezeUntil, setFreezeUntil] = useState("");
   const [pendingMonths, setPendingMonths] = useState<number | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [disableOpen, setDisableOpen] = useState(false);
   const [notice, setNotice] = useState<{
     title: string;
     description?: string;
@@ -132,6 +136,18 @@ export function MemberDetailScreen({
     },
     onError: (e: Error) =>
       setNotice({ title: e.message || t("members.inviteSendFailed"), tone: "critical" }),
+  });
+
+  const disableAccess = useMutation({
+    mutationFn: () =>
+      apiFetch(`/members/${id}/invite/disable`, { method: "POST", body: "{}" }),
+    onSuccess: () => {
+      setDisableOpen(false);
+      qc.invalidateQueries({ queryKey: ["member", id] });
+      setNotice({ title: t("members.disableAccess"), tone: "success" });
+    },
+    onError: (e: Error) =>
+      setNotice({ title: e.message || t("common.error"), tone: "critical" }),
   });
 
   const freeze = useMutation({
@@ -203,6 +219,38 @@ export function MemberDetailScreen({
         <Text style={styles.label}>{t("detail.cardValid")}</Text>
         <Text style={styles.value}>{formatDate(member.subscriptionEnd, locale)}</Text>
       </Card>
+
+      {member.email ? (
+        <Card>
+          <Text style={styles.section}>{t("members.appAccess")}</Text>
+          <Text style={styles.muted}>{member.email}</Text>
+          <View style={styles.badgeWrap}>
+            <Badge
+              label={t(
+                inviteAccessLabel({
+                  inviteStatus: member.inviteStatus,
+                  inviteExpiresAt: member.inviteExpiresAt,
+                }),
+              )}
+              tone={
+                member.inviteStatus === "ACTIVE"
+                  ? "success"
+                  : member.inviteStatus === "DISABLED"
+                    ? "danger"
+                    : "warning"
+              }
+            />
+          </View>
+          <Text style={styles.muted}>{t("members.appAccessHint")}</Text>
+          {canAdmin && member.inviteStatus === "ACTIVE" ? (
+            <Button
+              label={t("members.disableAccess")}
+              variant="secondary"
+              onPress={() => setDisableOpen(true)}
+            />
+          ) : null}
+        </Card>
+      ) : null}
 
       {canAdmin ? (
       <Card>
@@ -284,6 +332,27 @@ export function MemberDetailScreen({
           disabled={!amount || Number(amount) <= 0}
         />
       </Card>
+
+      <Button
+        label={t("detail.qrTitle")}
+        variant="secondary"
+        onPress={() =>
+          router.push(
+            membersListRoute === "/(staff)/members"
+              ? `/(staff)/members/${id}/qr`
+              : `/(admin)/members/${id}/qr`,
+          )
+        }
+        style={{ marginBottom: spacing.md }}
+      />
+
+      {canAdmin ? (
+        <Button
+          label={t("detail.editTitle")}
+          variant="secondary"
+          onPress={() => router.push(`/(admin)/members/${id}/edit`)}
+        />
+      ) : null}
 
       <View style={styles.actionRow}>
         <Button
@@ -378,6 +447,20 @@ export function MemberDetailScreen({
       loading={remove.isPending}
       onConfirm={() => remove.mutate()}
     />
+    ) : null}
+
+    {canAdmin ? (
+      <ConfirmDialog
+        visible={disableOpen}
+        onClose={() => setDisableOpen(false)}
+        tone="critical"
+        title={t("members.disableAccess")}
+        description={t("members.disableConfirm")}
+        confirmLabel={t("members.disableAccess")}
+        cancelLabel={t("common.cancel")}
+        loading={disableAccess.isPending}
+        onConfirm={() => disableAccess.mutate()}
+      />
     ) : null}
 
     <NoticeDialog

@@ -23,7 +23,8 @@
     "./bills": "./src/bills.ts",
     "./drinks": "./src/drinks.ts",
     "./access-export": "./src/access-export.ts",
-    "./badge": "./src/badge.ts"
+    "./badge": "./src/badge.ts",
+    "./invite-access": "./src/invite-access.ts"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

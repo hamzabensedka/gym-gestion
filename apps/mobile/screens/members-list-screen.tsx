@@ -72,7 +72,10 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
   async function exportMembers() {
     setExporting("members");
     try {
-      const csv = await apiText("/members/export");
+      const path = q.trim()
+        ? `/members/export?q=${encodeURIComponent(q.trim())}`
+        : "/members/export";
+      const csv = await apiText(path);
       await shareCsv("members.csv", csv);
     } catch (e) {
       setErrorNotice(e instanceof Error ? e.message : t("common.error"));
@@ -85,7 +88,7 @@ export function MembersListScreen({ isAdmin, memberBasePath }: MembersListScreen
     setExporting("access");
     try {
       const csv = await apiText("/access/export");
-      await shareCsv("access.csv", csv);
+      await shareCsv("access-allowed.csv", csv);
     } catch (e) {
       setErrorNotice(e instanceof Error ? e.message : t("common.error"));
     } finally {
