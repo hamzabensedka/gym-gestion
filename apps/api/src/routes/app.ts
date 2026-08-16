@@ -15,6 +15,7 @@ import {
 } from "@gym/shared/auth";
 import { resolveMemberStatusOnSubscriptionChange } from "../services/freeze";
 import { withOnboardedMemberFilter } from "@gym/shared/member-auth";
+import { memberExportSearchWhere } from "../lib/member-export-search";
 import { extendSubscription } from "@gym/shared/subscription";
 import { generateMemberQrPayload } from "@gym/shared/member-qr";
 import { normalizePhone } from "@gym/shared/format";
@@ -102,8 +103,12 @@ membersRoutes.get("/export", requireAdmin, async (c) => {
     throw error;
   }
 
+  const q = c.req.query("q") ?? "";
   const members = await prisma.member.findMany({
-    where: withOnboardedMemberFilter({ gymId: staff.gymId }),
+    where: withOnboardedMemberFilter({
+      gymId: staff.gymId,
+      ...memberExportSearchWhere(q),
+    }),
     orderBy: { fullName: "asc" },
   });
 
