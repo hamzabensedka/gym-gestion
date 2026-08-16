@@ -233,6 +233,10 @@ export function AppShell({
     [router],
   );
 
+  if (pathname === "/kiosk" && showKioskNav) {
+    return <div className="min-h-dvh bg-background">{children}</div>;
+  }
+
   return (
     <div className="relative flex min-h-dvh bg-background">
       <aside className="ios-blur sticky top-0 hidden h-dvh w-72 shrink-0 flex-col border-e border-border px-4 py-6 lg:flex">

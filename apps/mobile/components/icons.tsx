@@ -22,6 +22,7 @@ const tabIcons = {
   staff: "user-check",
   settings: "settings",
   scan: "camera",
+  kiosk: "tablet",
   manual: "search",
   wallet: "credit-card",
   bills: "file-text",

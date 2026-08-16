@@ -8,6 +8,12 @@ export type NavItem = {
   icon: TabIconName | "more" | "logout";
 };
 
+const kioskNavItem: NavItem = {
+  route: "kiosk",
+  labelKey: "nav.kiosk",
+  icon: "kiosk",
+};
+
 /** Mirrors `src/components/layout/app-shell.tsx` adminNavBase + bills/drinks inserts */
 const adminNavBase: NavItem[] = [
   { route: "dashboard", labelKey: "nav.dashboard", icon: "dashboard" },
@@ -25,11 +31,15 @@ const adminNavBase: NavItem[] = [
 export const adminNav: NavItem[] = adminNavBase;
 
 export function buildAdminNav(features: readonly PlanFeature[]): NavItem[] {
-  return adminNavBase.filter((item) => {
+  const items = adminNavBase.filter((item) => {
     if (item.route === "bills") return features.includes("utility_bills");
     if (item.route === "drinks") return features.includes("drinks");
     return true;
   });
+  if (!features.includes("kiosk")) return items;
+  const scanIndex = items.findIndex((item) => item.route === "scan");
+  const insertAt = scanIndex >= 0 ? scanIndex + 1 : items.length;
+  return [...items.slice(0, insertAt), kioskNavItem, ...items.slice(insertAt)];
 }
 
 /** Mirrors `src/components/layout/app-shell.tsx` staffNav */
@@ -40,6 +50,13 @@ export const staffNav: NavItem[] = [
   { route: "today", labelKey: "nav.today", icon: "attendance" },
   { route: "account", labelKey: "nav.account", icon: "settings" },
 ];
+
+export function buildStaffNav(features: readonly PlanFeature[]): NavItem[] {
+  if (!features.includes("kiosk")) return staffNav;
+  const scanIndex = staffNav.findIndex((item) => item.route === "scan");
+  const insertAt = scanIndex >= 0 ? scanIndex + 1 : staffNav.length;
+  return [...staffNav.slice(0, insertAt), kioskNavItem, ...staffNav.slice(insertAt)];
+}
 
 export function getMobilePrimary(nav: NavItem[]) {
   return nav.slice(0, 4);

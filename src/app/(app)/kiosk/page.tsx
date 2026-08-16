@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { StaggerGroup } from "@/components/ui/stagger-group";
 import { buttonVariants } from "@/components/ui/button";
+import { KioskPanel } from "@/components/kiosk/kiosk-panel";
 import { getGymBilling } from "@/lib/gym-features";
 import { createTranslator } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
@@ -23,28 +24,24 @@ export default async function KioskPage() {
   const unlocked = planHasFeature(gym.plan, "kiosk");
   const canUpgrade = session.role === Role.ADMIN;
 
+  if (unlocked) {
+    return <KioskPanel gymName={session.gymName ?? "Gym Gestion"} />;
+  }
+
   return (
     <StaggerGroup className="mx-auto max-w-2xl space-y-5">
-      <PageHeader
-        title={t("kiosk.title")}
-        subtitle={unlocked ? t("kiosk.phase2Subtitle") : t("kiosk.lockedSubtitle")}
-      />
-
-      {unlocked ? (
-        <p className="text-pretty text-sm text-muted-foreground">{t("kiosk.phase2")}</p>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-pretty text-sm text-muted-foreground">{t("kiosk.comingSoon")}</p>
-          {canUpgrade ? (
-            <Link
-              href="/settings"
-              className={cn(buttonVariants({ variant: "default" }), "inline-flex")}
-            >
-              {t("kiosk.upgradeCta")}
-            </Link>
-          ) : null}
-        </div>
-      )}
+      <PageHeader title={t("kiosk.title")} subtitle={t("kiosk.lockedSubtitle")} />
+      <div className="space-y-4">
+        <p className="text-pretty text-sm text-muted-foreground">{t("kiosk.comingSoon")}</p>
+        {canUpgrade ? (
+          <Link
+            href="/settings"
+            className={cn(buttonVariants({ variant: "default" }), "inline-flex")}
+          >
+            {t("kiosk.upgradeCta")}
+          </Link>
+        ) : null}
+      </div>
     </StaggerGroup>
   );
 }

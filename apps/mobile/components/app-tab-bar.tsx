@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { FeatherIcon, TabIcon, type TabIconName } from "@/components/icons";
 import { MoreSheet } from "@/components/more-sheet";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -10,10 +11,10 @@ import { useI18n } from "@/lib/i18n-context";
 import { apiFetch } from "@/lib/api";
 import {
   buildAdminNav,
+  buildStaffNav,
   getMobileMore,
   getMobilePrimary,
   isNavActive,
-  staffNav,
   type NavItem,
 } from "@/lib/navigation";
 import type { Plan, PlanFeature } from "@gym/shared/plans";
@@ -75,14 +76,14 @@ export function AppTabBar({ state, navigation, variant }: AppTabBarProps) {
   const settingsQuery = useQuery({
     queryKey: ["gym-settings-summary"],
     queryFn: () => apiFetch<GymSettings>("/settings"),
-    enabled: variant === "admin" && authState.status === "staff",
+    enabled: authState.status === "staff",
     staleTime: 5 * 60 * 1000,
   });
 
   const nav =
     variant === "admin"
       ? buildAdminNav(settingsQuery.data?.features ?? [])
-      : staffNav;
+      : buildStaffNav(settingsQuery.data?.features ?? []);
   const primary = getMobilePrimary(nav);
   const moreItems = getMobileMore(nav);
   const showMoreMenu = moreItems.length > 0;
@@ -91,6 +92,10 @@ export function AppTabBar({ state, navigation, variant }: AppTabBarProps) {
   const moreActive = moreItems.some((item) => isNavActive(currentRoute, item.route));
 
   function navigateTo(route: string) {
+    if (route === "kiosk") {
+      router.push("/kiosk");
+      return;
+    }
     navigation.navigate(route);
   }
 

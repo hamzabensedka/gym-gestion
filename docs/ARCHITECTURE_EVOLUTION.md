@@ -1,7 +1,7 @@
 # Architecture Evolution — Gym Gestion
 
 **Date:** 2026-08-16  
-**Branch context:** `feat/mobile-parity-phase-c`  
+**Branch context:** `feat/mobile-parity-phase-d`  
 **Audience:** product owner / developer deciding how to grow the monorepo
 
 ---
@@ -35,6 +35,7 @@ Both stacks talk to the **same database**. Domain rules are **partly** shared (`
 - **API vs web separation started** — mobile does not call Next Server Actions; it uses Hono.
 - **Phase B mobile settings/export parity (2026-08-02)** — enriched `GET /v1/settings` + `PATCH /v1/settings/plan-access`; plan-gated members/payments CSV + `GET /v1/access/export`; Pro `badgeNumber` on member create/update (API + Expo); mobile settings for plan/access/theme and ShareSheet CSV.
 - **Phase C mobile core leftovers (2026-08-16)** — admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
+- **Phase D kiosk (2026-08-16)** — Growth+ self-check-in on web `/kiosk` and Expo; same `performCheckin` rules as desk (shared parse/decide in `@gym/shared/checkin`); idle timeout; Starter locked. Mobile onboarding wizard still web-only.
 
 This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield mess.
 
@@ -46,7 +47,7 @@ This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield m
 
 | Concern | Web | API |
 |---------|-----|-----|
-| Check-in | `src/lib/checkin.ts` + actions | `apps/api/src/services/checkin.ts` |
+| Check-in | `src/lib/checkin.ts` (shared decide/parse) | `apps/api/src/services/checkin.ts` (same helpers) |
 | Members CRUD / renew / freeze | `src/app/actions/members.ts` | `apps/api/src/routes/app.ts` + services |
 | Dashboard | `src/lib/dashboard.ts` | `apps/api/src/services/dashboard.ts` |
 | Staff limits | `src/app/actions/staff.ts` | `apps/api` staff route (partially shared via `canAddStaff`) |
@@ -202,7 +203,7 @@ Scale along **three axes**. Pick the order based on sales, not fashion.
 2. **Done (Phase B):** Hono plan gates on members/payments/access CSV; Pro badge + access export; enriched settings + plan-access PATCH; Expo settings/ShareSheet.
 3. Point web imports at `@gym/shared` where files are already identical (start with `validations`).
 4. **Done (Phase C):** admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
-5. Phase D next: kiosk self check-in (Growth+).
+5. **Done (Phase D):** Growth+ kiosk self check-in on web and Expo; shared check-in parse/decide; Starter locked. Onboarding wizard still web-only.
 
 ### Next (hexagonal foundation — ~1 vertical slice)
 
@@ -215,7 +216,7 @@ Pick **check-in** or **access export** as the pilot slice:
 
 ### Then (SaaS growth)
 
-1. Kiosk self check-in (Growth) — inbound adapter only, same `RecordCheckin` use case.
+1. Optional mobile onboarding wizard if `onboardingCompletedAt` is null.
 2. Billing gateway + `planStatus` automation.
 3. First vendor connector behind `AccessControlPort` (only after you know the brand).
 

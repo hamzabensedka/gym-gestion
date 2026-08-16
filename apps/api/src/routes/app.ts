@@ -650,7 +650,7 @@ staffRoutes.delete("/:id", async (c) => {
 
 export const settingsRoutes = new Hono();
 
-settingsRoutes.get("/", requireAdmin, async (c) => {
+settingsRoutes.get("/", requireDeskAccess, async (c) => {
   const gym = await prisma.gym.findUnique({
     where: { id: c.get("staff").gymId },
     select: {

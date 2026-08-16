@@ -9,8 +9,16 @@ export default defineConfig({
     fileParallelism: false,
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      {
+        find: /^@gym\/shared$/,
+        replacement: path.resolve(__dirname, "./packages/shared/src/index.ts"),
+      },
+      {
+        find: /^@gym\/shared\/(.*)$/,
+        replacement: `${path.resolve(__dirname, "./packages/shared/src")}/$1.ts`,
+      },
+    ],
   },
 });

@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { PrismaClient } from "@prisma/client";
-import { performCheckin } from "@/lib/checkin";
+import { performCheckin, performCheckinFromInput } from "@/lib/checkin";
 import { resetTestDatabase } from "../helpers/db";
 
 const prisma = new PrismaClient();
@@ -68,5 +68,35 @@ describe("performCheckin integration", () => {
     const result = await performCheckin(gymId, "nonexistent-member-id");
     expect(result.success).toBe(false);
     expect(result.outcome).toBe("NOT_FOUND");
+  });
+
+  it("grants check-in when code is the member phone", async () => {
+    const result = await performCheckinFromInput(gymId, {
+      code: "+21620123456",
+    });
+    expect(result.success).toBe(true);
+    expect(result.outcome).toBe("GRANTED");
+    expect(result.memberName).toBe("Ahmed Ben Ali");
+  });
+
+  it("grants check-in when code is the member badge", async () => {
+    const result = await performCheckinFromInput(gymId, { code: "1001" });
+    expect(result.success).toBe(true);
+    expect(result.outcome).toBe("GRANTED");
+    expect(result.memberName).toBe("Ahmed Ben Ali");
+  });
+
+  it("returns NOT_FOUND for an unknown kiosk code", async () => {
+    const result = await performCheckinFromInput(gymId, {
+      code: "no-such-code",
+    });
+    expect(result.success).toBe(false);
+    expect(result.outcome).toBe("NOT_FOUND");
+  });
+
+  it("returns INVALID when the input is empty", async () => {
+    const result = await performCheckinFromInput(gymId, {});
+    expect(result.success).toBe(false);
+    expect(result.outcome).toBe("INVALID");
   });
 });
