@@ -346,6 +346,14 @@ export function MemberDetailScreen({
         style={{ marginBottom: spacing.md }}
       />
 
+      {canAdmin ? (
+        <Button
+          label={t("detail.editTitle")}
+          variant="secondary"
+          onPress={() => router.push(`/(admin)/members/${id}/edit`)}
+        />
+      ) : null}
+
       <View style={styles.actionRow}>
         <Button
           label={t("detail.whatsapp")}

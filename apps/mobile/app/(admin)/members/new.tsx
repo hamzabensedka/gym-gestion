@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n-context";
 import { apiFetch } from "@/lib/api";
 import { Button, Input, Screen, Title } from "@/components/ui";
+import { PlanMonthChips } from "@/components/plan-month-chips";
 import { NoticeDialog } from "@/components/confirm-dialog";
 import { spacing } from "@/lib/theme";
 
@@ -26,6 +27,7 @@ export default function NewMemberScreen() {
   const [subscriptionEnd, setSubscriptionEnd] = useState(defaultEnd);
   const [monthlyFee, setMonthlyFee] = useState("80");
   const [notes, setNotes] = useState("");
+  const [activePlan, setActivePlan] = useState<number | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
   const { data: settings } = useQuery({
@@ -72,8 +74,28 @@ export default function NewMemberScreen() {
             keyboardType="number-pad"
           />
         ) : null}
-        <Input label={t("common.startDate")} value={subscriptionStart} onChangeText={setSubscriptionStart} />
-        <Input label={t("common.endDate")} value={subscriptionEnd} onChangeText={setSubscriptionEnd} />
+        <PlanMonthChips
+          start={subscriptionStart}
+          activePlan={activePlan}
+          onChangeEnd={setSubscriptionEnd}
+          onChangePlan={setActivePlan}
+        />
+        <Input
+          label={t("common.startDate")}
+          value={subscriptionStart}
+          onChangeText={(v) => {
+            setSubscriptionStart(v);
+            setActivePlan(null);
+          }}
+        />
+        <Input
+          label={t("common.endDate")}
+          value={subscriptionEnd}
+          onChangeText={(v) => {
+            setSubscriptionEnd(v);
+            setActivePlan(null);
+          }}
+        />
         <Input label={t("common.monthlyFee")} value={monthlyFee} onChangeText={setMonthlyFee} keyboardType="numeric" />
         <Input label={t("common.notes")} value={notes} onChangeText={setNotes} />
         <Button label={t("form.create")} onPress={() => create.mutate()} loading={create.isPending} />
