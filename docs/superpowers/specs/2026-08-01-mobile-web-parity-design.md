@@ -30,7 +30,7 @@
 |------|-----|
 | Money | **Phase A done** — bills + drinks API + mobile |
 | SaaS | **Phase B done** — plan/access/theme settings, badge numbers, gated CSV + access export, ShareSheet |
-| Core | Member edit UI, invite disable, staff view of member QR |
+| Core | **Phase C specified** — see `docs/superpowers/specs/2026-08-16-mobile-parity-phase-c-core-leftovers-design.md` |
 | Growth | Real kiosk (web is placeholder); mobile onboarding optional |
 
 ## Architecture (Approach 1 — API-first)
@@ -140,14 +140,16 @@ Payloads mirror web actions (`createBillAction`, `sellDrinkAction`, etc.): amoun
 
 ## Phase C — Core leftovers
 
+**Status:** Specified (2026-08-16) — `docs/superpowers/specs/2026-08-16-mobile-parity-phase-c-core-leftovers-design.md`
+
 | Item | Work |
 |------|------|
-| Member edit | Mobile form → existing `PATCH /v1/members/:id` |
-| Invite disable | Wire API that already exists |
-| Member QR (staff) | Screen or sheet using `GET /v1/members/:id/qr` |
-| Exports polish | Ensure dashboard/members entry points match web affordances |
+| Member edit | Dedicated admin screen → existing `PATCH /v1/members/:id` |
+| Invite disable | Confirm + `POST /v1/members/:id/invite/disable` (ACTIVE only, admin) |
+| Member QR (desk) | Full-screen from detail → `GET /v1/members/:id/qr` (admin + staff) |
+| Exports polish | `q` on members export; access filename `access-allowed.csv` |
 
-No new domain tables. Small PRs preferred.
+No new domain tables. Small PRs preferred. Phase D stays out.
 
 ---
 
