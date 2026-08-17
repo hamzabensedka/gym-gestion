@@ -63,6 +63,27 @@ authRoutes.post("/staff/refresh", async (c) => {
   return c.json({ data: tokens });
 });
 
+authRoutes.post("/staff/verify-password", requireStaff, loginRateLimit, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const password = typeof body.password === "string" ? body.password : "";
+  if (!password) {
+    return c.json({ error: { code: "VALIDATION", message: "Mot de passe requis" } }, 422);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: c.get("staff").sub },
+    select: { passwordHash: true },
+  });
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    return c.json(
+      { error: { code: "INVALID_PASSWORD", message: "kiosk.exitPasswordWrong" } },
+      422,
+    );
+  }
+
+  return c.json({ data: { ok: true } });
+});
+
 authRoutes.post("/staff/logout", requireStaff, async (c) => {
   const { refreshToken } = await c.req.json().catch(() => ({}));
   if (refreshToken) await revokeRefreshToken(refreshToken);

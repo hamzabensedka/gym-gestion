@@ -1,6 +1,6 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Feather } from "@expo/vector-icons";
 import { FeatherIcon } from "@/components/icons";
 import { Button } from "@/components/ui";
@@ -60,6 +60,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
   tone?: ConfirmDialogTone;
   icon?: FeatherName;
+  children?: ReactNode;
   loading?: boolean;
   /** Single-button mode — hides cancel */
   alertOnly?: boolean;
@@ -75,6 +76,7 @@ export function ConfirmDialog({
   onConfirm,
   tone = "brand",
   icon,
+  children,
   loading = false,
   alertOnly = false,
 }: ConfirmDialogProps) {
@@ -111,6 +113,8 @@ export function ConfirmDialog({
                 {description ? <Text style={styles.description}>{description}</Text> : null}
               </View>
             </View>
+
+            {children ? <View style={styles.children}>{children}</View> : null}
 
             <View style={styles.actions}>
               {!alertOnly && cancelLabel ? (
@@ -232,6 +236,10 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
   actions: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  children: {
     marginTop: spacing.md,
     gap: spacing.sm,
   },

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { CameraOff, Keyboard, Loader2, LogOut, ScanLine } from "lucide-react";
 import { CheckinFeedback } from "@/components/checkin/checkin-feedback";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Field, Input } from "@/components/ui/input";
 import { useT } from "@/components/i18n/locale-provider";
 import type { CheckinResult } from "@/lib/checkin";
+import { verifyKioskExitAction } from "@/app/actions/kiosk";
 import { KIOSK_IDLE_MS, KIOSK_RESULT_MS } from "@gym/shared/checkin";
 
 const READER_ID = "kiosk-qr-reader";
@@ -77,6 +77,9 @@ export function KioskPanel({ gymName }: { gymName: string }) {
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
+  const [exitPassword, setExitPassword] = useState("");
+  const [exitError, setExitError] = useState<string | null>(null);
+  const [exitPending, setExitPending] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraDenied, setCameraDenied] = useState(false);
@@ -222,6 +225,37 @@ export function KioskPanel({ gymName }: { gymName: string }) {
     await postCheckin({ code: trimmed });
   }
 
+  function openExit() {
+    setExitPassword("");
+    setExitError(null);
+    setExitOpen(true);
+  }
+
+  function closeExit() {
+    if (exitPending) return;
+    setExitOpen(false);
+    setExitPassword("");
+    setExitError(null);
+  }
+
+  async function confirmExit() {
+    if (exitPending) return;
+    setExitError(null);
+    setExitPending(true);
+    try {
+      const result = await verifyKioskExitAction(exitPassword);
+      if (!("ok" in result) || !result.ok) {
+        setExitError(t("kiosk.exitPasswordWrong"));
+        return;
+      }
+      setExitOpen(false);
+      setExitPassword("");
+      router.push("/scan");
+    } finally {
+      setExitPending(false);
+    }
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col bg-background px-6 py-8">
       <header className="flex items-center justify-between gap-4">
@@ -236,7 +270,7 @@ export function KioskPanel({ gymName }: { gymName: string }) {
           type="button"
           variant="outline"
           className="min-h-11 active:scale-[0.96]"
-          onClick={() => setExitOpen(true)}
+          onClick={openExit}
         >
           <LogOut className="size-4" strokeWidth={1.75} />
           {t("kiosk.exit")}
@@ -336,19 +370,52 @@ export function KioskPanel({ gymName }: { gymName: string }) {
         />
       ) : null}
 
-      <ConfirmDialog
-        open={exitOpen}
-        onOpenChange={setExitOpen}
-        tone="neutral"
-        icon={LogOut}
-        title={t("kiosk.exitConfirm")}
-        description={t("kiosk.exitConfirmBody")}
-        confirmLabel={t("kiosk.exit")}
-        cancelLabel={t("common.cancel")}
-        onConfirm={() => {
-          router.push("/scan");
-        }}
-      />
+      {exitOpen ? (
+        <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <form
+            className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void confirmExit();
+            }}
+          >
+            <div>
+              <p className="text-base font-semibold text-foreground">{t("kiosk.exitConfirm")}</p>
+              <p className="mt-1.5 text-pretty text-sm text-muted-foreground">
+                {t("kiosk.exitConfirmBody")}
+              </p>
+            </div>
+            <Field label={t("kiosk.exitPassword")}>
+              <Input
+                type="password"
+                value={exitPassword}
+                onChange={(event) => setExitPassword(event.target.value)}
+                autoComplete="current-password"
+                autoFocus
+              />
+            </Field>
+            {exitError ? (
+              <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground">
+                {exitError}
+              </p>
+            ) : null}
+            <div className="flex flex-col gap-2 sm:flex-row-reverse">
+              <Button type="submit" disabled={exitPending || !exitPassword.trim()} className="flex-1">
+                {exitPending ? t("common.loading") : t("kiosk.exit")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={exitPending}
+                className="flex-1"
+                onClick={closeExit}
+              >
+                {t("common.cancel")}
+              </Button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }
