@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Link, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FeatherIcon } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -12,17 +13,22 @@ import { colors } from "@/lib/theme";
 export function MemberShell({
   children,
   title,
+  showClassesNav = false,
 }: {
   children: React.ReactNode;
   title?: string;
+  showClassesNav?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const { t } = useI18n();
   const { logout } = useAuth();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const classesActive = pathname.includes("classes");
+  const cardActive = !classesActive && !pathname.includes("card");
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Logo size={36} />
@@ -42,6 +48,53 @@ export function MemberShell({
         </View>
       </View>
       <View style={styles.main}>{children}</View>
+
+      {showClassesNav ? (
+        <View style={[styles.tabBar, { paddingBottom: Math.max(4, insets.bottom) }]}>
+          <View style={styles.tabGrid}>
+            <Link href="/(member)" asChild>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: cardActive }}
+                style={({ pressed }) => [styles.tab, pressed && { transform: [{ scale: 0.96 }] }]}
+              >
+                <FeatherIcon
+                  name="credit-card"
+                  color={cardActive ? colors.brand : colors.foreground50}
+                  size={24}
+                />
+                <Text
+                  style={[styles.tabLabel, cardActive && styles.tabLabelActive]}
+                  numberOfLines={1}
+                >
+                  {t("member.wallet.title")}
+                </Text>
+              </Pressable>
+            </Link>
+            <Link href="/(member)/classes" asChild>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: classesActive }}
+                style={({ pressed }) => [styles.tab, pressed && { transform: [{ scale: 0.96 }] }]}
+              >
+                <FeatherIcon
+                  name="calendar"
+                  color={classesActive ? colors.brand : colors.foreground50}
+                  size={24}
+                />
+                <Text
+                  style={[styles.tabLabel, classesActive && styles.tabLabelActive]}
+                  numberOfLines={1}
+                >
+                  {t("nav.classes")}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
+        </View>
+      ) : (
+        <View style={{ height: insets.bottom }} />
+      )}
 
       <ConfirmDialog
         visible={logoutOpen}
@@ -81,5 +134,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  main: { flex: 1, paddingHorizontal: 20, paddingBottom: 32 },
+  main: { flex: 1, paddingHorizontal: 20, paddingBottom: 16 },
+  tabBar: {
+    backgroundColor: colors.tabBarBg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: 4,
+    paddingHorizontal: 4,
+  },
+  tabGrid: {
+    flexDirection: "row",
+    maxWidth: 512,
+    width: "100%",
+    alignSelf: "center",
+  },
+  tab: {
+    flex: 1,
+    minHeight: 49,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+    paddingHorizontal: 4,
+  },
+  tabLabel: {
+    width: "100%",
+    textAlign: "center",
+    fontSize: 10,
+    fontWeight: "500",
+    lineHeight: 12,
+    color: colors.foreground50,
+  },
+  tabLabelActive: {
+    color: colors.brand,
+  },
 });

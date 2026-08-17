@@ -114,10 +114,20 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => fill("staff@gym.local", "staff123")}
-              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-start transition-colors hover:bg-accent"
+              className="flex w-full flex-col items-start gap-0.5 border-b border-border px-4 py-3 text-start transition-colors hover:bg-accent"
             >
               <span className="text-sm font-medium">{t("staff.roleStaff")}</span>
               <span className="text-xs text-muted-foreground">staff@gym.local</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fill("ahmed.ben.ali.1@member.gym.local", "member123")}
+              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-start transition-colors hover:bg-accent"
+            >
+              <span className="text-sm font-medium">{t("login.demo.member")}</span>
+              <span className="text-xs text-muted-foreground">
+                ahmed.ben.ali.1@member.gym.local
+              </span>
             </button>
           </Card>
         </div>

@@ -94,6 +94,11 @@ export default function LoginScreen() {
               title={t("staff.roleStaff")}
               subtitle="staff@gym.local"
               onPress={() => fill("staff@gym.local", "staff123")}
+            />
+            <DemoRow
+              title={t("login.demo.member")}
+              subtitle="ahmed.ben.ali.1@member.gym.local"
+              onPress={() => fill("ahmed.ben.ali.1@member.gym.local", "member123")}
               last
             />
           </View>
