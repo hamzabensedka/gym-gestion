@@ -57,6 +57,7 @@ enum UtilityType {
   WATER
   ELECTRICITY
   GAS
+  CUSTOM
 }
 
 enum ClassSessionStatus {
@@ -67,6 +68,17 @@ enum ClassSessionStatus {
 enum BookingStatus {
   BOOKED
   CANCELLED
+}
+
+enum MemberGender {
+  MALE
+  FEMALE
+}
+
+enum SessionAudience {
+  MIXED
+  LADIES
+  MEN
 }
 
 model Gym {
@@ -131,6 +143,7 @@ model Member {
   notes             String?
   badgeNumber       String?
   monthlyFee        Decimal             @default(0) @db.Decimal(10, 2)
+  gender            MemberGender?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   checkins          Checkin[]
@@ -272,6 +285,7 @@ model ClassSession {
   endsAt    DateTime
   capacity  Int
   coachName String?
+  audience  SessionAudience    @default(MIXED)
   status    ClassSessionStatus @default(SCHEDULED)
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
