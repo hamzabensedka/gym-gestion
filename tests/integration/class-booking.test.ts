@@ -6,6 +6,13 @@ import {
   assertClassBookingEnabled,
   bookSession,
   cancelBooking,
+  generateWeekSessions,
+  updateSession,
+  deleteClass,
+  deleteSession,
+  cancelClassSession,
+  listMemberSessions,
+  createSession,
 } from "@gym/shared/class-booking";
 
 const prisma = new PrismaClient();
@@ -180,6 +187,151 @@ describe("class booking integration", () => {
         now,
       }),
       "NOT_FOUND",
+    );
+  });
+
+  it("generateWeekSessions skips an existing gymId+classId+startsAt row on the second run", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    const weekStart = new Date("2026-09-07T00:00:00.000Z");
+    const slots = [{ weekday: 1, startMinutes: 10 * 60, endMinutes: 11 * 60 }];
+    const first = await generateWeekSessions(prisma, {
+      gymId,
+      classId: klass.id,
+      weekStart,
+      slots,
+    });
+    expect(first).toEqual({ created: 1, skipped: 0 });
+    const second = await generateWeekSessions(prisma, {
+      gymId,
+      classId: klass.id,
+      weekStart,
+      slots,
+    });
+    expect(second).toEqual({ created: 0, skipped: 1 });
+  });
+
+  it("updateSession rejects capacity below the current BOOKED count", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    const session = await prisma.classSession.create({
+      data: {
+        gymId,
+        classId: klass.id,
+        startsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        endsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        capacity: 8,
+        status: "SCHEDULED",
+      },
+    });
+    await prisma.booking.create({
+      data: { gymId, sessionId: session.id, memberId: ahmedId, status: "BOOKED" },
+    });
+    await prisma.booking.create({
+      data: { gymId, sessionId: session.id, memberId: raniaId, status: "BOOKED" },
+    });
+    await expectBookingCode(
+      updateSession(prisma, { gymId, sessionId: session.id, capacity: 1 }),
+      "CAPACITY_BELOW_BOOKINGS",
+    );
+  });
+
+  it("deleteClass rejects when the class still has sessions", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    await expectBookingCode(deleteClass(prisma, { gymId, classId: klass.id }), "CLASS_HAS_SESSIONS");
+  });
+
+  it("deleteSession rejects when any booking row exists", async () => {
+    await expectBookingCode(
+      deleteSession(prisma, { gymId, sessionId }),
+      "SESSION_HAS_BOOKINGS",
+    );
+  });
+
+  it("cancelClassSession sets the session and BOOKED rows to CANCELLED", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    const session = await prisma.classSession.create({
+      data: {
+        gymId,
+        classId: klass.id,
+        startsAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
+        endsAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        capacity: 8,
+        status: "SCHEDULED",
+      },
+    });
+    await prisma.booking.create({
+      data: { gymId, sessionId: session.id, memberId: ahmedId, status: "BOOKED" },
+    });
+    const now = new Date();
+    await cancelClassSession(prisma, { gymId, sessionId: session.id, now });
+    const updated = await prisma.classSession.findFirst({
+      where: { id: session.id, gymId },
+    });
+    expect(updated?.status).toBe("CANCELLED");
+    const bookings = await prisma.booking.findMany({
+      where: { sessionId: session.id, gymId },
+    });
+    expect(bookings).toHaveLength(1);
+    expect(bookings[0]?.status).toBe("CANCELLED");
+    expect(bookings[0]?.cancelledAt?.getTime()).toBe(now.getTime());
+  });
+
+  it("listMemberSessions omits CANCELLED sessions and other members' names", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    const base = Date.now() + 8 * 24 * 60 * 60 * 1000;
+    const scheduled = await prisma.classSession.create({
+      data: {
+        gymId,
+        classId: klass.id,
+        startsAt: new Date(base),
+        endsAt: new Date(base + 60 * 60 * 1000),
+        capacity: 8,
+        status: "SCHEDULED",
+      },
+    });
+    const cancelled = await prisma.classSession.create({
+      data: {
+        gymId,
+        classId: klass.id,
+        startsAt: new Date(base + 2 * 60 * 60 * 1000),
+        endsAt: new Date(base + 3 * 60 * 60 * 1000),
+        capacity: 8,
+        status: "CANCELLED",
+      },
+    });
+    await prisma.booking.create({
+      data: { gymId, sessionId: scheduled.id, memberId: raniaId, status: "BOOKED" },
+    });
+    const rows = await listMemberSessions(prisma, {
+      gymId,
+      memberId: ahmedId,
+      from: new Date(base - 60 * 1000),
+      to: new Date(base + 4 * 60 * 60 * 1000),
+    });
+    expect(rows.some((row) => row.id === cancelled.id)).toBe(false);
+    const scheduledRow = rows.find((row) => row.id === scheduled.id);
+    expect(scheduledRow).toBeTruthy();
+    expect(scheduledRow?.remaining).toBe(7);
+    expect(scheduledRow?.myBooking).toBeNull();
+    expect(JSON.stringify(rows)).not.toContain("Rania");
+  });
+
+  it("createSession rejects endsAt <= startsAt with VALIDATION", async () => {
+    const klass = await prisma.class.findFirst({ where: { gymId, name: "Yoga" } });
+    if (!klass) throw new Error("Yoga missing");
+    const startsAt = new Date(Date.now() + 9 * 24 * 60 * 60 * 1000);
+    await expectBookingCode(
+      createSession(prisma, {
+        gymId,
+        classId: klass.id,
+        startsAt,
+        endsAt: startsAt,
+      }),
+      "VALIDATION",
     );
   });
 });

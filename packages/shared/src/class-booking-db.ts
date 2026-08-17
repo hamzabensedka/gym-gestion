@@ -2,10 +2,47 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { assertPlanFeature } from "./gym-features";
 import {
   BookingError,
+  assertCapacity,
+  assertClassName,
+  assertCoachName,
   decideMemberBookEligibility,
+  endsAtFromWeekSlot,
   isSessionFull,
   remainingSpots,
+  startsAtFromWeekSlot,
 } from "./class-booking";
+
+export type MemberSessionRow = {
+  id: string;
+  className: string;
+  startsAt: Date;
+  endsAt: Date;
+  capacity: number;
+  remaining: number;
+  coachName: string | null;
+  myBooking: "BOOKED" | "CANCELLED" | null;
+};
+
+export type DeskSessionRow = MemberSessionRow & {
+  classId: string;
+  status: "SCHEDULED" | "CANCELLED";
+  bookedCount: number;
+};
+
+export type ClassRow = {
+  id: string;
+  name: string;
+  defaultCapacity: number;
+  active: boolean;
+};
+
+export type RosterRow = {
+  memberId: string;
+  fullName: string;
+  status: "BOOKED" | "CANCELLED";
+  createdAt: Date;
+  cancelledAt: Date | null;
+};
 
 export async function assertClassBookingEnabled(
   db: PrismaClient,
@@ -149,4 +186,420 @@ export async function cancelBooking(
 
     return { remaining: remainingSpots(session.capacity, bookedCountAfter) };
   });
+}
+
+async function bookedCountBySession(
+  db: PrismaClient,
+  gymId: string,
+  sessionIds: string[],
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (sessionIds.length === 0) {
+    return counts;
+  }
+  const groups = await db.booking.groupBy({
+    by: ["sessionId"],
+    where: { gymId, sessionId: { in: sessionIds }, status: "BOOKED" },
+    _count: { _all: true },
+  });
+  for (const group of groups) {
+    counts.set(group.sessionId, group._count._all);
+  }
+  return counts;
+}
+
+export async function listClasses(db: PrismaClient, gymId: string): Promise<ClassRow[]> {
+  return db.class.findMany({
+    where: { gymId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, defaultCapacity: true, active: true },
+  });
+}
+
+export async function createClass(
+  db: PrismaClient,
+  input: { gymId: string; name: string; defaultCapacity: number },
+): Promise<{ id: string }> {
+  const name = assertClassName(input.name);
+  const defaultCapacity = assertCapacity(input.defaultCapacity);
+  try {
+    const created = await db.class.create({
+      data: { gymId: input.gymId, name, defaultCapacity },
+    });
+    return { id: created.id };
+  } catch (error) {
+    if (isUniqueConflict(error)) {
+      throw new BookingError("VALIDATION");
+    }
+    throw error;
+  }
+}
+
+export async function updateClass(
+  db: PrismaClient,
+  input: { gymId: string; classId: string; name?: string; defaultCapacity?: number; active?: boolean },
+): Promise<void> {
+  const existing = await db.class.findFirst({
+    where: { id: input.classId, gymId: input.gymId },
+  });
+  if (!existing) {
+    throw new BookingError("NOT_FOUND");
+  }
+  const data: Prisma.ClassUpdateManyMutationInput = {};
+  if (input.name !== undefined) {
+    data.name = assertClassName(input.name);
+  }
+  if (input.defaultCapacity !== undefined) {
+    data.defaultCapacity = assertCapacity(input.defaultCapacity);
+  }
+  if (input.active !== undefined) {
+    data.active = input.active;
+  }
+  if (Object.keys(data).length === 0) {
+    return;
+  }
+  try {
+    await db.class.updateMany({
+      where: { id: input.classId, gymId: input.gymId },
+      data,
+    });
+  } catch (error) {
+    if (isUniqueConflict(error)) {
+      throw new BookingError("VALIDATION");
+    }
+    throw error;
+  }
+}
+
+export async function deleteClass(
+  db: PrismaClient,
+  input: { gymId: string; classId: string },
+): Promise<void> {
+  const existing = await db.class.findFirst({
+    where: { id: input.classId, gymId: input.gymId },
+  });
+  if (!existing) {
+    throw new BookingError("NOT_FOUND");
+  }
+  const sessionCount = await db.classSession.count({
+    where: { classId: input.classId, gymId: input.gymId },
+  });
+  if (sessionCount > 0) {
+    throw new BookingError("CLASS_HAS_SESSIONS");
+  }
+  await db.class.deleteMany({
+    where: { id: input.classId, gymId: input.gymId },
+  });
+}
+
+export async function listDeskSessions(
+  db: PrismaClient,
+  input: { gymId: string; from: Date; to: Date },
+): Promise<DeskSessionRow[]> {
+  const sessions = await db.classSession.findMany({
+    where: {
+      gymId: input.gymId,
+      startsAt: { gte: input.from, lt: input.to },
+    },
+    include: { class: { select: { name: true } } },
+    orderBy: { startsAt: "asc" },
+  });
+  const counts = await bookedCountBySession(
+    db,
+    input.gymId,
+    sessions.map((session) => session.id),
+  );
+  return sessions.map((session) => {
+    const bookedCount = counts.get(session.id) ?? 0;
+    return {
+      id: session.id,
+      classId: session.classId,
+      className: session.class.name,
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+      capacity: session.capacity,
+      remaining: remainingSpots(session.capacity, bookedCount),
+      coachName: session.coachName,
+      myBooking: null,
+      status: session.status,
+      bookedCount,
+    };
+  });
+}
+
+export async function listMemberSessions(
+  db: PrismaClient,
+  input: { gymId: string; memberId: string; from: Date; to: Date },
+): Promise<MemberSessionRow[]> {
+  const sessions = await db.classSession.findMany({
+    where: {
+      gymId: input.gymId,
+      status: "SCHEDULED",
+      startsAt: { gte: input.from, lt: input.to },
+    },
+    include: { class: { select: { name: true } } },
+    orderBy: { startsAt: "asc" },
+  });
+  const sessionIds = sessions.map((session) => session.id);
+  const counts = await bookedCountBySession(db, input.gymId, sessionIds);
+  const mine =
+    sessionIds.length === 0
+      ? []
+      : await db.booking.findMany({
+          where: { gymId: input.gymId, memberId: input.memberId, sessionId: { in: sessionIds } },
+          select: { sessionId: true, status: true },
+        });
+  const myBookingBySession = new Map(mine.map((row) => [row.sessionId, row.status]));
+  return sessions.map((session) => {
+    const bookedCount = counts.get(session.id) ?? 0;
+    return {
+      id: session.id,
+      className: session.class.name,
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+      capacity: session.capacity,
+      remaining: remainingSpots(session.capacity, bookedCount),
+      coachName: session.coachName,
+      myBooking: myBookingBySession.get(session.id) ?? null,
+    };
+  });
+}
+
+export async function createSession(
+  db: PrismaClient,
+  input: {
+    gymId: string;
+    classId: string;
+    startsAt: Date;
+    endsAt: Date;
+    capacity?: number;
+    coachName?: string | null;
+  },
+): Promise<{ id: string }> {
+  if (!(input.endsAt > input.startsAt)) {
+    throw new BookingError("VALIDATION");
+  }
+  const klass = await db.class.findFirst({
+    where: { id: input.classId, gymId: input.gymId },
+  });
+  if (!klass) {
+    throw new BookingError("NOT_FOUND");
+  }
+  const capacity = assertCapacity(input.capacity ?? klass.defaultCapacity);
+  const coachName = assertCoachName(input.coachName);
+  try {
+    const created = await db.classSession.create({
+      data: {
+        gymId: input.gymId,
+        classId: input.classId,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        capacity,
+        coachName,
+        status: "SCHEDULED",
+      },
+    });
+    return { id: created.id };
+  } catch (error) {
+    if (isUniqueConflict(error)) {
+      throw new BookingError("VALIDATION");
+    }
+    throw error;
+  }
+}
+
+export async function cancelClassSession(
+  db: PrismaClient,
+  input: { gymId: string; sessionId: string; now: Date },
+): Promise<void> {
+  const session = await db.classSession.findFirst({
+    where: { id: input.sessionId, gymId: input.gymId },
+  });
+  if (!session) {
+    throw new BookingError("NOT_FOUND");
+  }
+  await db.$transaction(async (tx) => {
+    await tx.classSession.updateMany({
+      where: { id: input.sessionId, gymId: input.gymId },
+      data: { status: "CANCELLED" },
+    });
+    await tx.booking.updateMany({
+      where: { sessionId: input.sessionId, gymId: input.gymId, status: "BOOKED" },
+      data: { status: "CANCELLED", cancelledAt: input.now },
+    });
+  });
+}
+
+export async function updateSession(
+  db: PrismaClient,
+  input: {
+    gymId: string;
+    sessionId: string;
+    startsAt?: Date;
+    endsAt?: Date;
+    capacity?: number;
+    coachName?: string | null;
+    status?: "SCHEDULED" | "CANCELLED";
+  },
+): Promise<void> {
+  const session = await db.classSession.findFirst({
+    where: { id: input.sessionId, gymId: input.gymId },
+  });
+  if (!session) {
+    throw new BookingError("NOT_FOUND");
+  }
+
+  const startsAt = input.startsAt ?? session.startsAt;
+  const endsAt = input.endsAt ?? session.endsAt;
+  if (input.startsAt !== undefined || input.endsAt !== undefined) {
+    if (!(endsAt > startsAt)) {
+      throw new BookingError("VALIDATION");
+    }
+  }
+
+  if (input.capacity !== undefined) {
+    const capacity = assertCapacity(input.capacity);
+    const bookedCount = await db.booking.count({
+      where: { sessionId: input.sessionId, gymId: input.gymId, status: "BOOKED" },
+    });
+    if (capacity < bookedCount) {
+      throw new BookingError("CAPACITY_BELOW_BOOKINGS");
+    }
+  }
+
+  const data: Prisma.ClassSessionUpdateManyMutationInput = {};
+  if (input.startsAt !== undefined) data.startsAt = input.startsAt;
+  if (input.endsAt !== undefined) data.endsAt = input.endsAt;
+  if (input.capacity !== undefined) data.capacity = assertCapacity(input.capacity);
+  if (input.coachName !== undefined) data.coachName = assertCoachName(input.coachName);
+  if (input.status === "SCHEDULED") data.status = "SCHEDULED";
+
+  try {
+    if (Object.keys(data).length > 0) {
+      await db.classSession.updateMany({
+        where: { id: input.sessionId, gymId: input.gymId },
+        data,
+      });
+    }
+  } catch (error) {
+    if (isUniqueConflict(error)) {
+      throw new BookingError("VALIDATION");
+    }
+    throw error;
+  }
+
+  if (input.status === "CANCELLED") {
+    await cancelClassSession(db, {
+      gymId: input.gymId,
+      sessionId: input.sessionId,
+      now: new Date(),
+    });
+  }
+}
+
+export async function deleteSession(
+  db: PrismaClient,
+  input: { gymId: string; sessionId: string },
+): Promise<void> {
+  const session = await db.classSession.findFirst({
+    where: { id: input.sessionId, gymId: input.gymId },
+  });
+  if (!session) {
+    throw new BookingError("NOT_FOUND");
+  }
+  const bookingCount = await db.booking.count({
+    where: { sessionId: input.sessionId, gymId: input.gymId },
+  });
+  if (bookingCount > 0) {
+    throw new BookingError("SESSION_HAS_BOOKINGS");
+  }
+  await db.classSession.deleteMany({
+    where: { id: input.sessionId, gymId: input.gymId },
+  });
+}
+
+export async function generateWeekSessions(
+  db: PrismaClient,
+  input: {
+    gymId: string;
+    classId: string;
+    weekStart: Date;
+    slots: Array<{ weekday: number; startMinutes: number; endMinutes: number }>;
+    capacity?: number;
+    coachName?: string | null;
+  },
+): Promise<{ created: number; skipped: number }> {
+  const klass = await db.class.findFirst({
+    where: { id: input.classId, gymId: input.gymId },
+  });
+  if (!klass) {
+    throw new BookingError("NOT_FOUND");
+  }
+  for (const slot of input.slots) {
+    if (slot.endMinutes <= slot.startMinutes) {
+      throw new BookingError("VALIDATION");
+    }
+    startsAtFromWeekSlot(input.weekStart, slot.weekday, slot.startMinutes);
+    endsAtFromWeekSlot(input.weekStart, slot.weekday, slot.endMinutes);
+  }
+  const capacity = assertCapacity(input.capacity ?? klass.defaultCapacity);
+  const coachName = assertCoachName(input.coachName);
+  let created = 0;
+  let skipped = 0;
+  for (const slot of input.slots) {
+    const startsAt = startsAtFromWeekSlot(input.weekStart, slot.weekday, slot.startMinutes);
+    const endsAt = endsAtFromWeekSlot(input.weekStart, slot.weekday, slot.endMinutes);
+    const existing = await db.classSession.findFirst({
+      where: { gymId: input.gymId, classId: input.classId, startsAt },
+    });
+    if (existing) {
+      skipped += 1;
+      continue;
+    }
+    try {
+      await db.classSession.create({
+        data: {
+          gymId: input.gymId,
+          classId: input.classId,
+          startsAt,
+          endsAt,
+          capacity,
+          coachName,
+          status: "SCHEDULED",
+        },
+      });
+      created += 1;
+    } catch (error) {
+      if (isUniqueConflict(error)) {
+        skipped += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { created, skipped };
+}
+
+export async function listSessionRoster(
+  db: PrismaClient,
+  input: { gymId: string; sessionId: string },
+): Promise<RosterRow[]> {
+  const session = await db.classSession.findFirst({
+    where: { id: input.sessionId, gymId: input.gymId },
+  });
+  if (!session) {
+    throw new BookingError("NOT_FOUND");
+  }
+  const bookings = await db.booking.findMany({
+    where: { gymId: input.gymId, sessionId: input.sessionId },
+    include: { member: { select: { fullName: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  return bookings.map((booking) => ({
+    memberId: booking.memberId,
+    fullName: booking.member.fullName,
+    status: booking.status,
+    createdAt: booking.createdAt,
+    cancelledAt: booking.cancelledAt,
+  }));
 }

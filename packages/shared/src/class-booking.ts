@@ -127,4 +127,27 @@ export function bookingErrorHttpStatus(code: BookingErrorCode): 403 | 404 | 409 
   return 409;
 }
 
-export { assertClassBookingEnabled, bookSession, cancelBooking } from "./class-booking-db";
+export type {
+  MemberSessionRow,
+  DeskSessionRow,
+  ClassRow,
+  RosterRow,
+} from "./class-booking-db";
+
+export {
+  assertClassBookingEnabled,
+  bookSession,
+  cancelBooking,
+  listClasses,
+  createClass,
+  updateClass,
+  deleteClass,
+  listDeskSessions,
+  listMemberSessions,
+  createSession,
+  updateSession,
+  deleteSession,
+  cancelClassSession,
+  generateWeekSessions,
+  listSessionRoster,
+} from "./class-booking-db";
