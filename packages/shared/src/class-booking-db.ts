@@ -5,11 +5,14 @@ import {
   assertCapacity,
   assertClassName,
   assertCoachName,
+  assertSessionAudience,
   decideMemberBookEligibility,
   endsAtFromWeekSlot,
   isSessionFull,
   remainingSpots,
+  sessionVisibleToMember,
   startsAtFromWeekSlot,
+  type SessionAudience,
 } from "./class-booking";
 
 export type MemberSessionRow = {
@@ -20,6 +23,7 @@ export type MemberSessionRow = {
   capacity: number;
   remaining: number;
   coachName: string | null;
+  audience: SessionAudience;
   myBooking: "BOOKED" | "CANCELLED" | null;
 };
 
@@ -84,6 +88,10 @@ export async function bookSession(
       });
       if (!session || !member) {
         throw new BookingError("NOT_FOUND");
+      }
+
+      if (!sessionVisibleToMember(session.audience, member.gender)) {
+        throw new BookingError("MEMBER_NOT_ELIGIBLE");
       }
 
       const eligibility = decideMemberBookEligibility({
@@ -320,6 +328,7 @@ export async function listDeskSessions(
       capacity: session.capacity,
       remaining: remainingSpots(session.capacity, bookedCount),
       coachName: session.coachName,
+      audience: session.audience,
       myBooking: null,
       status: session.status,
       bookedCount,
@@ -331,6 +340,14 @@ export async function listMemberSessions(
   db: PrismaClient,
   input: { gymId: string; memberId: string; from: Date; to: Date },
 ): Promise<MemberSessionRow[]> {
+  const member = await db.member.findFirst({
+    where: { id: input.memberId, gymId: input.gymId },
+    select: { gender: true },
+  });
+  if (!member) {
+    throw new BookingError("NOT_FOUND");
+  }
+
   const sessions = await db.classSession.findMany({
     where: {
       gymId: input.gymId,
@@ -340,7 +357,10 @@ export async function listMemberSessions(
     include: { class: { select: { name: true } } },
     orderBy: { startsAt: "asc" },
   });
-  const sessionIds = sessions.map((session) => session.id);
+  const visible = sessions.filter((session) =>
+    sessionVisibleToMember(session.audience, member.gender),
+  );
+  const sessionIds = visible.map((session) => session.id);
   const counts = await bookedCountBySession(db, input.gymId, sessionIds);
   const mine =
     sessionIds.length === 0
@@ -350,7 +370,7 @@ export async function listMemberSessions(
           select: { sessionId: true, status: true },
         });
   const myBookingBySession = new Map(mine.map((row) => [row.sessionId, row.status]));
-  return sessions.map((session) => {
+  return visible.map((session) => {
     const bookedCount = counts.get(session.id) ?? 0;
     return {
       id: session.id,
@@ -360,6 +380,7 @@ export async function listMemberSessions(
       capacity: session.capacity,
       remaining: remainingSpots(session.capacity, bookedCount),
       coachName: session.coachName,
+      audience: session.audience,
       myBooking: myBookingBySession.get(session.id) ?? null,
     };
   });
@@ -374,6 +395,7 @@ export async function createSession(
     endsAt: Date;
     capacity?: number;
     coachName?: string | null;
+    audience?: SessionAudience;
   },
 ): Promise<{ id: string }> {
   if (!(input.endsAt > input.startsAt)) {
@@ -387,6 +409,7 @@ export async function createSession(
   }
   const capacity = assertCapacity(input.capacity ?? klass.defaultCapacity);
   const coachName = assertCoachName(input.coachName);
+  const audience = assertSessionAudience(input.audience ?? "MIXED");
   try {
     const created = await db.classSession.create({
       data: {
@@ -396,6 +419,7 @@ export async function createSession(
         endsAt: input.endsAt,
         capacity,
         coachName,
+        audience,
         status: "SCHEDULED",
       },
     });
@@ -440,6 +464,7 @@ export async function updateSession(
     capacity?: number;
     coachName?: string | null;
     status?: "SCHEDULED" | "CANCELLED";
+    audience?: "MIXED" | "LADIES" | "MEN";
   },
 ): Promise<void> {
   const session = await db.classSession.findFirst({
@@ -464,6 +489,7 @@ export async function updateSession(
   if (capacity !== undefined) data.capacity = capacity;
   if (input.coachName !== undefined) data.coachName = assertCoachName(input.coachName);
   if (input.status === "SCHEDULED") data.status = "SCHEDULED";
+  if (input.audience !== undefined) data.audience = input.audience;
 
   const writeSession = async (client: Prisma.TransactionClient | PrismaClient) => {
     if (Object.keys(data).length === 0) {
@@ -541,6 +567,7 @@ export async function generateWeekSessions(
     slots: Array<{ weekday: number; startMinutes: number; endMinutes: number }>;
     capacity?: number;
     coachName?: string | null;
+    audience?: SessionAudience;
   },
 ): Promise<{ created: number; skipped: number }> {
   const klass = await db.class.findFirst({
@@ -561,6 +588,7 @@ export async function generateWeekSessions(
   }
   const capacity = assertCapacity(input.capacity ?? klass.defaultCapacity);
   const coachName = assertCoachName(input.coachName);
+  const audience = assertSessionAudience(input.audience ?? "MIXED");
   let created = 0;
   let skipped = 0;
   for (const slot of input.slots) {
@@ -582,6 +610,7 @@ export async function generateWeekSessions(
           endsAt,
           capacity,
           coachName,
+          audience,
           status: "SCHEDULED",
         },
       });

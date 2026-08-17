@@ -60,6 +60,7 @@ export async function createMemberAction(formData: FormData) {
     notes: formData.get("notes") || undefined,
     monthlyFee: formData.get("monthlyFee"),
     badgeNumber: formData.get("badgeNumber") || undefined,
+    gender: formData.get("gender"),
   });
 
   if (!parsed.success) {
@@ -88,6 +89,7 @@ export async function createMemberAction(formData: FormData) {
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
         badgeNumber: canBadge ? badgeNumber : null,
+        gender: parsed.data.gender,
         inviteStatus: email && sendInvite ? MemberInviteStatus.PENDING : null,
       },
       select: { id: true },
@@ -122,6 +124,7 @@ export async function updateMemberAction(memberId: string, formData: FormData) {
     notes: formData.get("notes") || undefined,
     monthlyFee: formData.get("monthlyFee"),
     badgeNumber: formData.get("badgeNumber") || undefined,
+    gender: formData.get("gender"),
   });
 
   if (!parsed.success) {
@@ -155,6 +158,7 @@ export async function updateMemberAction(memberId: string, formData: FormData) {
         status: resolveMemberStatusOnSubscriptionChange(existing.status, subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        gender: parsed.data.gender,
         ...(canBadge
           ? { badgeNumber: normalizeBadgeNumber(parsed.data.badgeNumber) }
           : {}),

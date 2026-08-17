@@ -18,6 +18,7 @@ export const memberSchema = z.object({
   notes: z.string().optional(),
   monthlyFee: z.coerce.number().min(0, "Montant invalide"),
   badgeNumber: z.string().optional().or(z.literal("")),
+  gender: z.enum(["MALE", "FEMALE"], { message: "Sexe requis" }),
 });
 
 export const memberInviteSchema = z.object({

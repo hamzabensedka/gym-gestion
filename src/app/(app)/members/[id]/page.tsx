@@ -296,6 +296,7 @@ export default async function MemberDetailPage({
             monthlyFee: Number(member.monthlyFee),
             inviteStatus: member.inviteStatus,
             badgeNumber: member.badgeNumber,
+            gender: member.gender,
           }}
         />
       </Card>

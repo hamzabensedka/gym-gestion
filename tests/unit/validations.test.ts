@@ -32,6 +32,7 @@ describe("validations", () => {
       subscriptionStart: "2026-01-01",
       subscriptionEnd: "2026-02-01",
       monthlyFee: 80,
+      gender: "MALE",
     });
     expect(result.success).toBe(true);
   });
@@ -44,6 +45,7 @@ describe("validations", () => {
       subscriptionEnd: "2026-02-01",
       monthlyFee: 80,
       badgeNumber: "1001",
+      gender: "FEMALE",
     });
     expect(result.success).toBe(true);
   });
