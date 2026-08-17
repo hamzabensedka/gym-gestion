@@ -4,6 +4,7 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FormValueInput } from "@/components/ui/form-value-input";
 
 export type SelectOption = {
   value: string;
@@ -68,14 +69,13 @@ function Select({
   return (
     <>
       {name ? (
-        <input
-          ref={hiddenRef}
-          type="hidden"
+        <FormValueInput
           name={name}
           value={current}
           required={required}
           disabled={disabled}
-          readOnly
+          inputRef={hiddenRef}
+          onValueChange={handleChange}
         />
       ) : null}
       <SelectPrimitive.Root

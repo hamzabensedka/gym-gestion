@@ -13,6 +13,7 @@ import {
   syncViewYearToSelection,
 } from "@/lib/month-picker";
 import { cn } from "@/lib/utils";
+import { FormValueInput } from "@/components/ui/form-value-input";
 
 type MonthPickerProps = {
   name?: string;
@@ -93,14 +94,13 @@ function MonthPicker({
   return (
     <>
       {name ? (
-        <input
-          ref={hiddenRef}
-          type="hidden"
+        <FormValueInput
           name={name}
           value={current}
           required={required}
           disabled={disabled}
-          readOnly
+          inputRef={hiddenRef}
+          onValueChange={commit}
         />
       ) : null}
       <Popover open={open} onOpenChange={setOpen}>

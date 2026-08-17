@@ -8,6 +8,7 @@ import { arTN, fr } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useI18n } from "@/components/i18n/locale-provider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FormValueInput } from "@/components/ui/form-value-input";
 import { cn } from "@/lib/utils";
 import "react-day-picker/style.css";
 
@@ -90,14 +91,13 @@ function DatePicker({
   return (
     <>
       {name ? (
-        <input
-          ref={hiddenRef}
-          type="hidden"
+        <FormValueInput
           name={name}
           value={current}
           required={required}
           disabled={disabled}
-          readOnly
+          inputRef={hiddenRef}
+          onValueChange={commit}
         />
       ) : null}
       <Popover open={open} onOpenChange={setOpen}>
