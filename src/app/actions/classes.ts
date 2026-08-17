@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
   BookingError,
+  assertSessionAudience,
   cancelBooking,
   cancelClassSession,
   createClass,
@@ -40,6 +41,7 @@ async function requireClassesDesk() {
 
 function revalidateClasses() {
   revalidatePath("/classes");
+  revalidatePath("/member/classes");
 }
 
 function formString(formData: FormData, key: string): string | null {
@@ -247,6 +249,7 @@ export async function generateWeekAction(formData: FormData): Promise<ActionResu
       slots,
       capacity: parseOptionalCapacity(formData, "capacity"),
       coachName: parseOptionalCoach(formData),
+      audience: assertSessionAudience(formData.get("audience") || "MIXED"),
     });
   });
 }
@@ -263,6 +266,7 @@ export async function createSessionAction(formData: FormData): Promise<ActionRes
       endsAt,
       capacity: parseOptionalCapacity(formData, "capacity"),
       coachName: parseOptionalCoach(formData),
+      audience: assertSessionAudience(formData.get("audience") || "MIXED"),
     });
   });
 }
@@ -278,6 +282,9 @@ export async function updateSessionAction(formData: FormData): Promise<ActionRes
       capacity: parseOptionalCapacity(formData, "capacity"),
       coachName: parseOptionalCoach(formData),
       status: parseOptionalStatus(formData),
+      audience: formData.get("audience")
+        ? assertSessionAudience(formData.get("audience"))
+        : undefined,
     });
   });
 }

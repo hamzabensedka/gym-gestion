@@ -17,6 +17,7 @@ export type DeskSessionView = {
   capacity: number;
   remaining: number;
   coachName: string | null;
+  audience: "MIXED" | "LADIES" | "MEN";
   status: "SCHEDULED" | "CANCELLED";
   bookedCount: number;
 };
