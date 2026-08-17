@@ -25,14 +25,15 @@
     "./access-export": "./src/access-export.ts",
     "./badge": "./src/badge.ts",
     "./invite-access": "./src/invite-access.ts",
-    "./checkin": "./src/checkin.ts"
+    "./checkin": "./src/checkin.ts",
+    "./class-booking": "./src/class-booking.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "date-fns": "^4.4.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@prisma/client": "^6.19.3",
     "typescript": "^5"
   }
 }

@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n-context";
 import { apiFetch } from "@/lib/api";
 import { colors, spacing } from "@/lib/theme";
 import { formatDate } from "@gym/shared/format";
+import type { PlanFeature } from "@gym/shared/plans";
 
 type Wallet = {
   fullName: string;
@@ -15,6 +16,7 @@ type Wallet = {
   subscriptionEnd: string;
   status: string;
   isActive: boolean;
+  features: PlanFeature[];
 };
 
 export default function MemberWalletScreen() {
@@ -55,6 +57,17 @@ export default function MemberWalletScreen() {
           </Pressable>
         </Link>
 
+        {data.features?.includes("class_booking") ? (
+          <Link href="/(member)/classes" asChild>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.entry, pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }]}
+            >
+              <Text style={styles.entryText}>{t("classes.memberEntry")}</Text>
+            </Pressable>
+          </Link>
+        ) : null}
+
         {!data.isActive ? (
           <Text style={styles.expired}>{t("member.qr.expiredBanner")}</Text>
         ) : null}
@@ -79,5 +92,17 @@ const styles = StyleSheet.create({
   label: { fontSize: 11, color: "rgba(255,255,255,0.6)" },
   date: { fontSize: 16, fontWeight: "600", color: "#fff", marginTop: 2 },
   tap: { fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: spacing.md, textAlign: "center" },
+  entry: {
+    minHeight: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  entryText: { fontSize: 14, fontWeight: "600", color: colors.foreground },
   expired: { color: colors.error, textAlign: "center", fontWeight: "500" },
 });

@@ -36,6 +36,7 @@ Both stacks talk to the **same database**. Domain rules are **partly** shared (`
 - **Phase B mobile settings/export parity (2026-08-02)** — enriched `GET /v1/settings` + `PATCH /v1/settings/plan-access`; plan-gated members/payments CSV + `GET /v1/access/export`; Pro `badgeNumber` on member create/update (API + Expo); mobile settings for plan/access/theme and ShareSheet CSV.
 - **Phase C mobile core leftovers (2026-08-16)** — admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
 - **Phase D kiosk (2026-08-16)** — Growth+ self-check-in on web `/kiosk` and Expo; same `performCheckin` rules as desk (shared parse/decide in `@gym/shared/checkin`); idle timeout; Starter locked. Mobile onboarding wizard still web-only.
+- **Class booking v1 (2026-08-17)** — Growth+ `class_booking`: `Class` / `ClassSession` / `Booking` gym-scoped; one `@gym/shared/class-booking` helper (row lock + count) used by web Server Actions and Hono `/v1`; admin web `/classes`; member calendar on web + Expo; Starter locked. Not FitBox Ladies custom code.
 
 This is a solid **modular monolith** for Tunisia gym SaaS — not a greenfield mess.
 
@@ -204,6 +205,7 @@ Scale along **three axes**. Pick the order based on sales, not fashion.
 3. Point web imports at `@gym/shared` where files are already identical (start with `validations`).
 4. **Done (Phase C):** admin member edit + invite disable; desk QR for admin/staff; members export `q`; access CSV `access-allowed.csv`.
 5. **Done (Phase D):** Growth+ kiosk self check-in on web and Expo; shared check-in parse/decide; Starter locked. Onboarding wizard still web-only.
+6. **Done (class booking v1):** shared book/cancel under `FOR UPDATE`; web admin grid; web+Expo member calendar; Starter `FEATURE_LOCKED`.
 
 ### Next (hexagonal foundation — ~1 vertical slice)
 

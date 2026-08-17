@@ -6,7 +6,8 @@ export type PlanFeature =
   | "badge_numbers"
   | "access_export"
   | "utility_bills"
-  | "drinks";
+  | "drinks"
+  | "class_booking";
 
 export type EntryAnswer =
   | "desk"
@@ -26,7 +27,7 @@ const PLAN_CONFIG: Record<
   },
   GROWTH: {
     maxStaff: 5,
-    features: ["kiosk", "csv_export", "utility_bills", "drinks"],
+    features: ["kiosk", "csv_export", "utility_bills", "drinks", "class_booking"],
     modes: [AccessMode.DESK_ONLY, AccessMode.KIOSK],
   },
   PRO: {
@@ -38,6 +39,7 @@ const PLAN_CONFIG: Record<
       "access_export",
       "utility_bills",
       "drinks",
+      "class_booking",
     ],
     modes: [
       AccessMode.DESK_ONLY,

@@ -32,6 +32,7 @@ import {
 import { prisma } from "../db";
 import { assertGymFeature, featureLockedResponse, isFeatureLockedError } from "../lib/features";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
+import { memberSessionRoutes } from "./classes";
 import { issueMemberInvite } from "../services/member-invite";
 
 function parseDate(value: string) {
@@ -763,7 +764,7 @@ memberAppRoutes.get("/wallet", async (c) => {
   const session = c.get("member");
   const member = await prisma.member.findFirst({
     where: { id: session.sub, gymId: session.gymId },
-    include: { gym: { select: { name: true, cardTheme: true } } },
+    include: { gym: { select: { name: true, cardTheme: true, plan: true } } },
   });
   if (!member) {
     return c.json({ error: { code: "NOT_FOUND", message: "Membre introuvable" } }, 404);
@@ -778,9 +779,12 @@ memberAppRoutes.get("/wallet", async (c) => {
       subscriptionEnd: member.subscriptionEnd.toISOString(),
       status,
       isActive: status === MemberStatus.ACTIVE,
+      features: getPlanLimits(member.gym.plan).features,
     },
   });
 });
+
+memberAppRoutes.route("/sessions", memberSessionRoutes);
 
 memberAppRoutes.get("/qr", async (c) => {
   const session = c.get("member");
