@@ -73,6 +73,10 @@ export async function createBillAction(formData: FormData) {
   const note =
     typeof noteRaw === "string" && noteRaw.trim() ? noteRaw.trim() : undefined;
 
+  if (typeRaw === UtilityType.CUSTOM && !note) {
+    return { error: "Nom de la charge requis" };
+  }
+
   await prisma.utilityBill.create({
     data: {
       gymId: gate.session.gymId,

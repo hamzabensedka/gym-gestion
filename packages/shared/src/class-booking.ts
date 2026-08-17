@@ -24,6 +24,26 @@ export function isBookingError(error: unknown): error is BookingError {
   return error instanceof BookingError;
 }
 
+export type SessionAudience = "MIXED" | "LADIES" | "MEN";
+export type MemberGender = "MALE" | "FEMALE";
+
+export function sessionVisibleToMember(
+  audience: SessionAudience,
+  gender: MemberGender | null | undefined,
+): boolean {
+  if (audience === "MIXED") return true;
+  if (gender === "FEMALE") return audience === "LADIES";
+  if (gender === "MALE") return audience === "MEN";
+  return false;
+}
+
+export function assertSessionAudience(value: unknown): SessionAudience {
+  if (value === "MIXED" || value === "LADIES" || value === "MEN") {
+    return value;
+  }
+  throw new BookingError("VALIDATION");
+}
+
 export function remainingSpots(capacity: number, bookedCount: number): number {
   return Math.max(0, capacity - bookedCount);
 }

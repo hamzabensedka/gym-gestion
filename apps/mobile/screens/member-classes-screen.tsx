@@ -119,7 +119,7 @@ export function MemberClassesScreen() {
 
   if (sessionsQuery.isLoading) {
     return (
-      <MemberShell title={t("classes.memberTitle")}>
+      <MemberShell title={t("classes.memberTitle")} showClassesNav>
         {back}
         <Text style={styles.muted}>{t("common.loading")}</Text>
       </MemberShell>
@@ -128,7 +128,7 @@ export function MemberClassesScreen() {
 
   if (sessionsQuery.isError && isFeatureLockedError(sessionsQuery.error)) {
     return (
-      <MemberShell title={t("classes.memberTitle")}>
+      <MemberShell title={t("classes.memberTitle")} showClassesNav>
         {back}
         <Text style={styles.locked}>{t("classes.memberLocked")}</Text>
       </MemberShell>
@@ -141,7 +141,7 @@ export function MemberClassesScreen() {
         ? sessionsQuery.error.message
         : t("common.error");
     return (
-      <MemberShell title={t("classes.memberTitle")}>
+      <MemberShell title={t("classes.memberTitle")} showClassesNav>
         {back}
         <Text style={styles.locked}>{message}</Text>
       </MemberShell>
@@ -151,7 +151,7 @@ export function MemberClassesScreen() {
   const sessions = sessionsQuery.data ?? [];
 
   return (
-    <MemberShell title={t("classes.memberTitle")}>
+    <MemberShell title={t("classes.memberTitle")} showClassesNav>
       <ScrollView style={styles.flex} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {back}
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -227,8 +227,10 @@ const styles = StyleSheet.create({
     gap: 6,
     alignSelf: "flex-start",
     minHeight: 40,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
   backText: { fontSize: 14, fontWeight: "500", color: colors.foreground },

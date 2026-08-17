@@ -14,7 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Field, Input, Select } from "@/components/ui/input";
+import { Field, Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { MonthPicker } from "@/components/ui/month-picker";
+import { Select } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -29,11 +32,21 @@ export type BillRow = {
   note: string | null;
 };
 
+const UTILITY_TYPES = ["WATER", "ELECTRICITY", "GAS", "CUSTOM"] as const satisfies readonly UtilityType[];
+
 const TYPE_LABEL: Record<UtilityType, TranslationKey> = {
-  [UtilityType.WATER]: "bills.type.WATER",
-  [UtilityType.ELECTRICITY]: "bills.type.ELECTRICITY",
-  [UtilityType.GAS]: "bills.type.GAS",
+  WATER: "bills.type.WATER",
+  ELECTRICITY: "bills.type.ELECTRICITY",
+  GAS: "bills.type.GAS",
+  CUSTOM: "bills.type.CUSTOM",
 };
+
+function billTitle(bill: BillRow, t: (key: TranslationKey) => string): string {
+  if (bill.type === "CUSTOM") {
+    return bill.note?.trim() || t("bills.type.CUSTOM");
+  }
+  return t(TYPE_LABEL[bill.type]);
+}
 
 export function BillsPanel({
   monthKey,
@@ -52,6 +65,7 @@ export function BillsPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [deletingBill, setDeletingBill] = useState<BillRow | null>(null);
+  const [billType, setBillType] = useState<UtilityType>("WATER");
 
   function onMonthChange(value: string) {
     if (!value) return;
@@ -67,6 +81,7 @@ export function BillsPanel({
         return;
       }
       formRef.current?.reset();
+      setBillType("WATER");
       router.refresh();
     });
   }
@@ -101,12 +116,7 @@ export function BillsPanel({
     <div className="space-y-5">
       <Card className="space-y-4 p-4">
         <Field label={t("bills.month")}>
-          <Input
-            type="month"
-            name="month"
-            value={monthKey}
-            onChange={(event) => onMonthChange(event.target.value)}
-          />
+          <MonthPicker value={monthKey} onValueChange={onMonthChange} />
         </Field>
 
         <div>
@@ -118,8 +128,8 @@ export function BillsPanel({
           </p>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          {(Object.values(UtilityType) as UtilityType[]).map((type) => (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {UTILITY_TYPES.map((type) => (
             <div
               key={type}
               className="rounded-lg border border-border bg-muted/40 px-3 py-2"
@@ -153,7 +163,7 @@ export function BillsPanel({
                 </span>
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold">{t(TYPE_LABEL[bill.type])}</p>
+                    <p className="font-semibold">{billTitle(bill, t)}</p>
                     <Badge tone={paid ? "success" : "neutral"}>
                       {paid ? t("bills.paid") : t("bills.unpaid")}
                     </Badge>
@@ -166,7 +176,7 @@ export function BillsPanel({
                       {t("bills.dueDate")}: {formatDate(bill.dueDate)}
                     </p>
                   ) : null}
-                  {bill.note ? (
+                  {bill.note && bill.type !== "CUSTOM" ? (
                     <p className="text-xs text-muted-foreground">{bill.note}</p>
                   ) : null}
                 </div>
@@ -208,13 +218,16 @@ export function BillsPanel({
         <form ref={formRef} action={handleCreate} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("bills.type")}>
-              <Select name="type" defaultValue={UtilityType.WATER} required>
-                <option value={UtilityType.WATER}>{t("bills.type.WATER")}</option>
-                <option value={UtilityType.ELECTRICITY}>
-                  {t("bills.type.ELECTRICITY")}
-                </option>
-                <option value={UtilityType.GAS}>{t("bills.type.GAS")}</option>
-              </Select>
+              <Select
+                name="type"
+                value={billType}
+                onValueChange={(value) => setBillType(value as UtilityType)}
+                required
+                options={UTILITY_TYPES.map((type) => ({
+                  value: type,
+                  label: t(TYPE_LABEL[type]),
+                }))}
+              />
             </Field>
             <Field label={`${t("bills.amount")} (TND)`}>
               <Input
@@ -227,19 +240,28 @@ export function BillsPanel({
               />
             </Field>
             <Field label={t("bills.period")}>
-              <Input
-                name="periodMonth"
-                type="month"
-                defaultValue={monthKey}
-                required
-              />
+              <MonthPicker name="periodMonth" defaultValue={monthKey} required />
             </Field>
             <Field label={t("bills.dueDate")}>
-              <Input name="dueDate" type="date" />
+              <DatePicker name="dueDate" />
             </Field>
           </div>
-          <Field label={t("bills.note")}>
-            <Input name="note" />
+          <Field
+            label={
+              billType === "CUSTOM"
+                ? t("bills.customName")
+                : t("bills.note")
+            }
+          >
+            <Input
+              name="note"
+              required={billType === "CUSTOM"}
+              placeholder={
+                billType === "CUSTOM"
+                  ? t("bills.customNamePlaceholder")
+                  : undefined
+              }
+            />
           </Field>
           {error ? (
             <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground">

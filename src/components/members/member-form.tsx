@@ -5,6 +5,8 @@ import { addMonths, format } from "date-fns";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Field } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select } from "@/components/ui/select";
 import { useT } from "@/components/i18n/locale-provider";
 import { PLAN_MONTHS } from "@/lib/subscription";
 import type { TranslationKey } from "@/lib/i18n";
@@ -22,6 +24,7 @@ type MemberFormProps = {
     monthlyFee: number;
     inviteStatus?: string | null;
     badgeNumber?: string | null;
+    gender?: "MALE" | "FEMALE" | null;
   };
   mode: "create" | "edit";
   showBadgeField?: boolean;
@@ -44,6 +47,7 @@ export function MemberForm({ action, defaultValues, mode, showBadgeField = false
   const [start, setStart] = useState(defaultValues?.subscriptionStart ?? today);
   const [end, setEnd] = useState(defaultValues?.subscriptionEnd ?? "");
   const [activePlan, setActivePlan] = useState<number | null>(null);
+  const [gender, setGender] = useState(defaultValues?.gender ?? "");
 
   function applyPlan(months: number) {
     const base = start ? new Date(`${start}T12:00:00`) : new Date();
@@ -86,6 +90,20 @@ export function MemberForm({ action, defaultValues, mode, showBadgeField = false
           autoComplete="email"
           placeholder="membre@email.com"
           defaultValue={defaultValues?.email ?? ""}
+        />
+      </Field>
+
+      <Field label={t("members.gender")}>
+        <Select
+          name="gender"
+          value={gender || undefined}
+          onValueChange={setGender}
+          required
+          placeholder={t("members.gender")}
+          options={[
+            { value: "MALE", label: t("members.gender.MALE") },
+            { value: "FEMALE", label: t("members.gender.FEMALE") },
+          ]}
         />
       </Field>
 
@@ -135,21 +153,19 @@ export function MemberForm({ action, defaultValues, mode, showBadgeField = false
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("common.startDate")}>
-          <Input
-            type="date"
+          <DatePicker
             name="subscriptionStart"
             value={start}
-            onChange={(e) => setStart(e.target.value)}
+            onValueChange={setStart}
             required
           />
         </Field>
         <Field label={t("common.endDate")}>
-          <Input
-            type="date"
+          <DatePicker
             name="subscriptionEnd"
             value={end}
-            onChange={(e) => {
-              setEnd(e.target.value);
+            onValueChange={(value) => {
+              setEnd(value);
               setActivePlan(null);
             }}
             required

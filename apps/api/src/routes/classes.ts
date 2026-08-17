@@ -18,6 +18,7 @@ import {
   parseSessionRange,
   updateClass,
   updateSession,
+  assertSessionAudience,
   type DeskSessionRow,
   type MemberSessionRow,
   type RosterRow,
@@ -242,6 +243,7 @@ sessionRoutes.post("/", async (c) => {
       endsAt: parseIsoDate(body.endsAt),
       capacity: parseOptionalCapacity(body.capacity),
       coachName: parseOptionalCoachName(body.coachName),
+      audience: body.audience === undefined ? undefined : assertSessionAudience(body.audience),
     });
     return c.json({ data: created }, 201);
   } catch (error) {
@@ -263,6 +265,7 @@ sessionRoutes.post("/generate-week", async (c) => {
       slots: parseWeekSlots(body.slots),
       capacity: parseOptionalCapacity(body.capacity),
       coachName: parseOptionalCoachName(body.coachName),
+      audience: body.audience === undefined ? undefined : assertSessionAudience(body.audience),
     });
     return c.json({ data: result });
   } catch (error) {
@@ -289,6 +292,7 @@ sessionRoutes.patch("/:id", async (c) => {
       capacity: parseOptionalCapacity(body.capacity),
       coachName: parseOptionalCoachName(body.coachName),
       status,
+      audience: body.audience === undefined ? undefined : assertSessionAudience(body.audience),
     });
     return c.json({ data: { ok: true } });
   } catch (error) {

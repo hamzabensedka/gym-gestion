@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { Banknote, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea, Select, Field } from "@/components/ui/input";
+import { Input, Textarea, Field } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select } from "@/components/ui/select";
 import { useT } from "@/components/i18n/locale-provider";
 import { recordPaymentAction } from "@/app/actions/payments";
 import { paymentMethods } from "@/lib/validations";
@@ -72,18 +74,20 @@ export function PaymentForm({ memberId, defaultAmount }: PaymentFormProps) {
           />
         </Field>
         <Field label={t("payments.paidAt")}>
-          <Input name="paidAt" type="date" required defaultValue={today} />
+          <DatePicker name="paidAt" required defaultValue={today} />
         </Field>
       </div>
 
       <Field label={t("payments.method")}>
-        <Select name="method" required defaultValue="CASH">
-          {paymentMethods.map((method) => (
-            <option key={method} value={method}>
-              {t(methodLabelKey[method])}
-            </option>
-          ))}
-        </Select>
+        <Select
+          name="method"
+          required
+          defaultValue="CASH"
+          options={paymentMethods.map((method) => ({
+            value: method,
+            label: t(methodLabelKey[method]),
+          }))}
+        />
       </Field>
 
       <Field label={t("payments.note")}>

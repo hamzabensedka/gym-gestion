@@ -8,6 +8,7 @@ import {
   startsAtFromWeekSlot,
   bookingErrorHttpStatus,
   BookingError,
+  sessionVisibleToMember,
 } from "@gym/shared/class-booking";
 
 describe("remainingSpots / isSessionFull", () => {
@@ -117,5 +118,28 @@ describe("bookingErrorHttpStatus", () => {
   it("maps full and already booked to 409", () => {
     expect(bookingErrorHttpStatus("SESSION_FULL")).toBe(409);
     expect(bookingErrorHttpStatus("ALREADY_BOOKED")).toBe(409);
+  });
+});
+
+describe("sessionVisibleToMember", () => {
+  it("shows mixed sessions to everyone", () => {
+    expect(sessionVisibleToMember("MIXED", "MALE")).toBe(true);
+    expect(sessionVisibleToMember("MIXED", "FEMALE")).toBe(true);
+    expect(sessionVisibleToMember("MIXED", null)).toBe(true);
+  });
+
+  it("hides ladies sessions from men", () => {
+    expect(sessionVisibleToMember("LADIES", "MALE")).toBe(false);
+    expect(sessionVisibleToMember("LADIES", "FEMALE")).toBe(true);
+  });
+
+  it("hides men sessions from women", () => {
+    expect(sessionVisibleToMember("MEN", "FEMALE")).toBe(false);
+    expect(sessionVisibleToMember("MEN", "MALE")).toBe(true);
+  });
+
+  it("hides gendered sessions when member gender is unknown", () => {
+    expect(sessionVisibleToMember("LADIES", null)).toBe(false);
+    expect(sessionVisibleToMember("MEN", undefined)).toBe(false);
   });
 });

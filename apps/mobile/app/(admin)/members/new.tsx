@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { addMonths, format } from "date-fns";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api";
 import { Button, Input, Screen, Title } from "@/components/ui";
 import { PlanMonthChips } from "@/components/plan-month-chips";
 import { NoticeDialog } from "@/components/confirm-dialog";
-import { spacing } from "@/lib/theme";
+import { colors, spacing } from "@/lib/theme";
 
 type SettingsSnapshot = {
   features: string[];
@@ -27,6 +27,7 @@ export default function NewMemberScreen() {
   const [subscriptionEnd, setSubscriptionEnd] = useState(defaultEnd);
   const [monthlyFee, setMonthlyFee] = useState("80");
   const [notes, setNotes] = useState("");
+  const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
   const [activePlan, setActivePlan] = useState<number | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
@@ -50,6 +51,7 @@ export default function NewMemberScreen() {
           subscriptionEnd,
           monthlyFee: Number(monthlyFee),
           notes: notes || undefined,
+          gender,
           sendInvite: email.trim().length > 0,
         }),
       }),
@@ -66,6 +68,21 @@ export default function NewMemberScreen() {
         <Input label={t("common.name")} value={fullName} onChangeText={setFullName} />
         <Input label={t("common.phone")} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <Input label={t("members.email")} value={email} onChangeText={setEmail} autoCapitalize="none" />
+        <View>
+          <Text style={styles.genderLabel}>{t("members.gender")}</Text>
+          <View style={styles.genderRow}>
+            {(["MALE", "FEMALE"] as const).map((value) => (
+              <Button
+                key={value}
+                label={t(value === "MALE" ? "members.gender.MALE" : "members.gender.FEMALE")}
+                variant={gender === value ? "primary" : "secondary"}
+                size="sm"
+                onPress={() => setGender(value)}
+                style={styles.genderBtn}
+              />
+            ))}
+          </View>
+        </View>
         {showBadge ? (
           <Input
             label={t("form.badgeNumber")}
@@ -115,4 +132,14 @@ export default function NewMemberScreen() {
 
 const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xl },
+  genderLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    color: colors.mutedForeground,
+    marginBottom: spacing.sm,
+  },
+  genderRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
+  genderBtn: { flex: 1 },
 });

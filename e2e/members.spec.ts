@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { addMonths, format } from "date-fns";
+import { fillNamed } from "./helpers/form";
 
 test.describe("Members management", () => {
   test("lists seeded members", async ({ page }) => {
@@ -37,7 +38,8 @@ test.describe("Members management", () => {
     await page.goto("/members/new");
     await page.locator('input[name="fullName"]').fill("Test E2E Member");
     await page.locator('input[name="phone"]').fill(uniquePhone);
-    await page.locator('input[name="subscriptionEnd"]').fill(endDate);
+    await fillNamed(page, "gender", "MALE");
+    await fillNamed(page, "subscriptionEnd", endDate);
     await page.locator('input[name="monthlyFee"]').fill("99");
     await page.getByRole("button", { name: "Créer le membre" }).click();
 
@@ -51,9 +53,8 @@ test.describe("Members management", () => {
     await page.goto("/members/new");
     await page.locator('input[name="fullName"]').fill("Duplicate Phone");
     await page.locator('input[name="phone"]').fill("+21620123456");
-    await page.locator('input[name="subscriptionEnd"]').fill(
-      format(addMonths(new Date(), 1), "yyyy-MM-dd"),
-    );
+    await fillNamed(page, "gender", "MALE");
+    await fillNamed(page, "subscriptionEnd", format(addMonths(new Date(), 1), "yyyy-MM-dd"));
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByText("Ce numéro de téléphone est déjà utilisé")).toBeVisible();
   });

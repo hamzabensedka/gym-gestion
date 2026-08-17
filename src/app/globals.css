@@ -194,6 +194,7 @@ figcaption {
   border-top: 1px solid var(--separator);
 }
 
+.ios-tab-bar a[role="tab"],
 .ios-tab-bar button[role="tab"] {
   -webkit-tap-highlight-color: transparent;
   font-size: 10px;
@@ -432,4 +433,12 @@ figcaption {
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+.gym-day-picker {
+  --rdp-accent-color: var(--brand);
+  --rdp-accent-background-color: color-mix(in srgb, var(--brand) 18%, transparent);
+  --rdp-background-color: transparent;
+  --rdp-today-color: var(--brand);
+  color: var(--foreground);
 }

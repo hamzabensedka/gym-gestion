@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { addMonths, format } from "date-fns";
 import { getMemberInviteToken } from "../tests/helpers/db";
+import { fillNamed } from "./helpers/form";
 
 test.describe("Member invite email flow", () => {
   test("admin invite → set password → member portal", async ({ browser }) => {
@@ -17,7 +18,8 @@ test.describe("Member invite email flow", () => {
     await adminPage.locator('input[name="fullName"]').fill("Invited E2E Member");
     await adminPage.locator('input[name="phone"]').fill(`+21698${Date.now().toString().slice(-7)}`);
     await adminPage.locator('input[name="email"]').fill(email);
-    await adminPage.locator('input[name="subscriptionEnd"]').fill(endDate);
+    await fillNamed(adminPage, "gender", "MALE");
+    await fillNamed(adminPage, "subscriptionEnd", endDate);
     await adminPage.getByRole("button", { name: "Créer le membre" }).click();
     await expect(adminPage).toHaveURL(/\/members\/[a-z0-9]+/);
 

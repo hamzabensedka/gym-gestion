@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { addDays, format, startOfWeek } from "date-fns";
-import { ClassCatalog } from "@/components/classes/class-catalog";
 import { ClassesPanel } from "@/components/classes/classes-panel";
 import type {
   ClassRowView,
@@ -110,6 +109,7 @@ export default async function ClassesPage({
     capacity: row.capacity,
     remaining: row.remaining,
     coachName: row.coachName,
+    audience: row.audience,
     status: row.status,
     bookedCount: row.bookedCount,
   }));
@@ -144,18 +144,14 @@ export default async function ClassesPage({
   return (
     <StaggerGroup className="space-y-5">
       <PageHeader title={t("classes.title")} subtitle={t("classes.subtitle")} />
-      {classRows.length === 0 ? (
-        <ClassCatalog classes={classRows} />
-      ) : (
-        <ClassesPanel
-          weekKey={weekKey}
-          classes={classRows}
-          sessions={sessionRows}
-          rosterSessionId={sessionParam ?? null}
-          rosterSession={rosterSession}
-          roster={rosterRows}
-        />
-      )}
+      <ClassesPanel
+        weekKey={weekKey}
+        classes={classRows}
+        sessions={sessionRows}
+        rosterSessionId={sessionParam ?? null}
+        rosterSession={rosterSession}
+        roster={rosterRows}
+      />
     </StaggerGroup>
   );
 }

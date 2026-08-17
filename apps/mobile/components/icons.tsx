@@ -25,6 +25,7 @@ const tabIcons = {
   kiosk: "tablet",
   manual: "search",
   wallet: "credit-card",
+  classes: "calendar",
   bills: "file-text",
   drinks: "coffee",
 } as const satisfies Record<string, FeatherName>;

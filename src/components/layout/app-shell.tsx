@@ -292,7 +292,12 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileHeader gymName={gymName} userName={userName} roleLabel={roleLabel} />
 
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-28 lg:px-8 lg:py-8">
+        <main
+          className={cn(
+            "mx-auto w-full flex-1 px-4 py-5 pb-28 lg:px-8 lg:py-8",
+            pathname === "/classes" ? "max-w-6xl" : "max-w-3xl",
+          )}
+        >
           {children}
         </main>
       </div>

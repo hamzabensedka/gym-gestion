@@ -49,6 +49,9 @@ export function KioskScreen() {
   const [feedback, setFeedback] = useState<CheckinResult | null>(null);
   const [scanning, setScanning] = useState(true);
   const [exitOpen, setExitOpen] = useState(false);
+  const [exitPassword, setExitPassword] = useState("");
+  const [exitError, setExitError] = useState<string | null>(null);
+  const [exitPending, setExitPending] = useState(false);
 
   const settingsQuery = useQuery({
     queryKey: ["gym-settings-summary"],
@@ -101,7 +104,7 @@ export function KioskScreen() {
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      setExitOpen(true);
+      openExit();
       return true;
     });
     return () => sub.remove();
@@ -115,6 +118,37 @@ export function KioskScreen() {
     },
     [scanning, checkin, feedback],
   );
+
+  function openExit() {
+    setExitPassword("");
+    setExitError(null);
+    setExitOpen(true);
+  }
+
+  function closeExit() {
+    if (exitPending) return;
+    setExitOpen(false);
+    setExitPassword("");
+    setExitError(null);
+  }
+
+  async function confirmExit() {
+    if (exitPending) return;
+    setExitError(null);
+    setExitPending(true);
+    try {
+      await apiFetch("/auth/staff/verify-password", {
+        method: "POST",
+        body: JSON.stringify({ password: exitPassword }),
+      });
+      leaveKiosk();
+      setExitPassword("");
+    } catch {
+      setExitError(t("kiosk.exitPasswordWrong"));
+    } finally {
+      setExitPending(false);
+    }
+  }
 
   function leaveKiosk() {
     setExitOpen(false);
@@ -162,19 +196,28 @@ export function KioskScreen() {
         <Text style={styles.subtitle}>{t("scan.cameraPermission")}</Text>
         <Button label={t("scan.allowCamera")} onPress={requestPermission} />
         <Button label={t("kiosk.enterCode")} variant="secondary" onPress={() => setMode("code")} />
-        <Pressable onPress={() => setExitOpen(true)} style={styles.exitLink}>
+        <Pressable onPress={openExit} style={styles.exitLink}>
           <Text style={styles.exitLinkText}>{t("kiosk.exit")}</Text>
         </Pressable>
         <ConfirmDialog
           visible={exitOpen}
-          onClose={() => setExitOpen(false)}
+          onClose={closeExit}
           title={t("kiosk.exitConfirm")}
           description={t("kiosk.exitConfirmBody")}
           confirmLabel={t("kiosk.exit")}
           cancelLabel={t("common.cancel")}
-          onConfirm={leaveKiosk}
+          onConfirm={() => void confirmExit()}
+          loading={exitPending}
           tone="neutral"
-        />
+        >
+          <Input
+            label={t("kiosk.exitPassword")}
+            value={exitPassword}
+            onChangeText={setExitPassword}
+            secureTextEntry
+          />
+          {exitError ? <Text style={styles.exitError}>{exitError}</Text> : null}
+        </ConfirmDialog>
       </View>
     );
   }
@@ -192,7 +235,7 @@ export function KioskScreen() {
             <Text style={styles.subtitle}>{t("kiosk.subtitle")}</Text>
           </View>
           <Pressable
-            onPress={() => setExitOpen(true)}
+            onPress={openExit}
             hitSlop={12}
             style={({ pressed }) => [styles.exitBtn, pressed && { transform: [{ scale: 0.96 }] }]}
           >
@@ -280,14 +323,23 @@ export function KioskScreen() {
 
       <ConfirmDialog
         visible={exitOpen}
-        onClose={() => setExitOpen(false)}
+        onClose={closeExit}
         title={t("kiosk.exitConfirm")}
         description={t("kiosk.exitConfirmBody")}
         confirmLabel={t("kiosk.exit")}
         cancelLabel={t("common.cancel")}
-        onConfirm={leaveKiosk}
+        onConfirm={() => void confirmExit()}
+        loading={exitPending}
         tone="neutral"
-      />
+      >
+        <Input
+          label={t("kiosk.exitPassword")}
+          value={exitPassword}
+          onChangeText={setExitPassword}
+          secureTextEntry
+        />
+        {exitError ? <Text style={styles.exitError}>{exitError}</Text> : null}
+      </ConfirmDialog>
     </KeyboardAvoidingView>
   );
 }
@@ -326,6 +378,7 @@ const styles = StyleSheet.create({
   exitBtnText: { color: colors.text, fontWeight: "600" },
   exitLink: { minHeight: 44, justifyContent: "center", alignItems: "center" },
   exitLinkText: { color: colors.brand, fontWeight: "600" },
+  exitError: { color: colors.danger, fontSize: 14, fontWeight: "600" },
   cameraWrap: {
     flex: 1,
     borderRadius: 24,

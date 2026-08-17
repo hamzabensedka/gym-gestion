@@ -4,25 +4,31 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { ArrowLeft } from "lucide-react";
 import {
+  cancelSessionAction,
   deskCancelBookingAction,
   deleteSessionAction,
   updateSessionAction,
 } from "@/app/actions/classes";
 import { useT } from "@/components/i18n/locale-provider";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field, Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Select } from "@/components/ui/select";
 import {
   translateClassError,
   type DeskSessionView,
   type RosterRowView,
 } from "./types";
 
-function toDateTimeLocal(iso: string): string {
-  return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
+function splitDateTime(iso: string): { date: string; time: string } {
+  const local = format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
+  const [date, time] = local.split("T");
+  return { date, time };
 }
 
 export function SessionRoster({
@@ -40,12 +46,19 @@ export function SessionRoster({
   const [pending, startTransition] = useTransition();
   const [cancellingMemberId, setCancellingMemberId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [cancellingSession, setCancellingSession] = useState(false);
 
   const booked = rows.filter((row) => row.status === "BOOKED");
 
   function handleUpdate(formData: FormData) {
     setError(null);
     formData.set("sessionId", session.id);
+    const startDate = String(formData.get("startsDate") ?? "");
+    const startTime = String(formData.get("startsTime") ?? "");
+    const endDate = String(formData.get("endsDate") ?? "");
+    const endTime = String(formData.get("endsTime") ?? "");
+    if (startDate && startTime) formData.set("startsAt", `${startDate}T${startTime}`);
+    if (endDate && endTime) formData.set("endsAt", `${endDate}T${endTime}`);
     startTransition(async () => {
       const result = await updateSessionAction(formData);
       if (result && "error" in result && result.error) {
@@ -67,6 +80,21 @@ export function SessionRoster({
         return;
       }
       setCancellingMemberId(null);
+      router.refresh();
+    });
+  }
+
+  function handleCancelSession() {
+    setError(null);
+    startTransition(async () => {
+      const result = await cancelSessionAction(session.id);
+      if (result && "error" in result && result.error) {
+        setError(translateClassError(t, result.error));
+        setCancellingSession(false);
+        return;
+      }
+      setCancellingSession(false);
+      router.push(`/classes?week=${weekKey}`);
       router.refresh();
     });
   }
@@ -98,12 +126,12 @@ export function SessionRoster({
             {format(new Date(session.endsAt), "HH:mm")}
           </p>
         </div>
-        <Link
-          href={`/classes?week=${weekKey}`}
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-10")}
-        >
-          {t("common.cancel")}
-        </Link>
+        <Button asChild variant="outline">
+          <Link href={`/classes?week=${weekKey}`}>
+            <ArrowLeft className="size-4" />
+            {t("common.back")}
+          </Link>
+        </Button>
       </CardHeader>
 
       {error ? (
@@ -113,6 +141,9 @@ export function SessionRoster({
       ) : null}
 
       <div className="space-y-2">
+        {booked.length === 0 ? (
+          <p className="text-pretty text-sm text-muted-foreground">{t("classes.noRoster")}</p>
+        ) : null}
         {booked.map((row) => (
           <div
             key={row.memberId}
@@ -121,10 +152,8 @@ export function SessionRoster({
             <p className="min-w-0 truncate text-sm font-medium">{row.fullName}</p>
             <Button
               type="button"
-              size="sm"
-              variant="ghost"
+              variant="outline"
               disabled={pending}
-              className="min-h-10"
               onClick={() => setCancellingMemberId(row.memberId)}
             >
               {t("classes.cancel")}
@@ -133,7 +162,7 @@ export function SessionRoster({
         ))}
       </div>
 
-      <form action={handleUpdate} className="space-y-3 border-t border-border pt-4">
+      <form key={session.id} action={handleUpdate} className="space-y-3 border-t border-border pt-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("classes.capacity")}>
             <Input
@@ -149,30 +178,53 @@ export function SessionRoster({
           <Field label={t("classes.coach")}>
             <Input name="coachName" defaultValue={session.coachName ?? ""} maxLength={80} />
           </Field>
-          <Field label={t("classes.week")}>
-            <Input
-              name="startsAt"
-              type="datetime-local"
-              defaultValue={toDateTimeLocal(session.startsAt)}
-            />
+          <div className="sm:col-span-2">
+            <Field label={t("classes.audience")}>
+              <Select
+                name="audience"
+                defaultValue={session.audience}
+                required
+                options={[
+                  { value: "MIXED", label: t("classes.audience.MIXED") },
+                  { value: "LADIES", label: t("classes.audience.LADIES") },
+                  { value: "MEN", label: t("classes.audience.MEN") },
+                ]}
+              />
+            </Field>
+          </div>
+          <Field label={t("classes.start")}>
+            <div className="grid grid-cols-2 gap-2">
+              <DatePicker name="startsDate" defaultValue={splitDateTime(session.startsAt).date} required />
+              <TimePicker name="startsTime" defaultValue={splitDateTime(session.startsAt).time} required />
+            </div>
           </Field>
-          <Field label={t("classes.week")}>
-            <Input
-              name="endsAt"
-              type="datetime-local"
-              defaultValue={toDateTimeLocal(session.endsAt)}
-            />
+          <Field label={t("classes.end")}>
+            <div className="grid grid-cols-2 gap-2">
+              <DatePicker name="endsDate" defaultValue={splitDateTime(session.endsAt).date} required />
+              <TimePicker name="endsTime" defaultValue={splitDateTime(session.endsAt).time} required />
+            </div>
           </Field>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="submit" size="sm" disabled={pending}>
+        <div className="flex flex-col gap-2">
+          <Button type="submit" disabled={pending} className="w-full">
             {t("common.save")}
           </Button>
+          {session.status !== "CANCELLED" ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              className="w-full"
+              onClick={() => setCancellingSession(true)}
+            >
+              {t("classes.sessionCancel")}
+            </Button>
+          ) : null}
           <Button
             type="button"
-            size="sm"
-            variant="ghost"
+            variant="danger"
             disabled={pending}
+            className="w-full"
             onClick={() => setDeleting(true)}
           >
             {t("classes.sessionDelete")}
@@ -193,6 +245,19 @@ export function SessionRoster({
         cancelLabel={t("common.cancel")}
         tone="critical"
         onConfirm={handleCancelBooking}
+      />
+
+      <ConfirmDialog
+        open={cancellingSession}
+        onOpenChange={(open) => {
+          if (!open) setCancellingSession(false);
+        }}
+        title={t("classes.sessionCancel")}
+        description={session.className}
+        confirmLabel={t("classes.sessionCancel")}
+        cancelLabel={t("common.cancel")}
+        tone="critical"
+        onConfirm={handleCancelSession}
       />
 
       <ConfirmDialog

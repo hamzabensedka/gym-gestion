@@ -246,6 +246,7 @@ membersRoutes.post("/", requireAdmin, async (c) => {
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
         badgeNumber: canBadge ? badgeNumber : null,
+        gender: parsed.data.gender,
         inviteStatus: email && sendInvite ? MemberInviteStatus.PENDING : null,
       },
     });
@@ -303,6 +304,7 @@ membersRoutes.patch("/:id", requireAdmin, async (c) => {
         status: resolveMemberStatusOnSubscriptionChange(existing.status, subscriptionEnd),
         notes: parsed.data.notes?.trim() || null,
         monthlyFee: parsed.data.monthlyFee,
+        gender: parsed.data.gender,
         ...(canBadge
           ? { badgeNumber: normalizeBadgeNumber(parsed.data.badgeNumber) }
           : {}),

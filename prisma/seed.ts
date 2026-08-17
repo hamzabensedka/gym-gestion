@@ -23,21 +23,22 @@ const memberSeed: Array<{
   fee: number;
   notes?: string;
   badgeNumber?: string;
+  gender: "MALE" | "FEMALE";
 }> = [
-  { fullName: "Ahmed Ben Ali", phone: "+21620123456", startOffset: -10, endOffset: 20, fee: 80, notes: "Abonnement 1 mois", badgeNumber: "1001" },
-  { fullName: "Sara Trabelsi", phone: "+21622111222", startOffset: -40, endOffset: -5, fee: 120, notes: "Renouvellement en attente", badgeNumber: "1002" },
-  { fullName: "Youssef Gharbi", phone: "+21698765432", startOffset: -5, endOffset: 3, fee: 100, badgeNumber: "1003" },
-  { fullName: "Mariem Bouazizi", phone: "+21655443322", startOffset: -60, endOffset: 30, fee: 150, notes: "Coaching personnel", badgeNumber: "1004" },
-  { fullName: "Khalil Mansour", phone: "+21621987654", startOffset: -90, endOffset: 90, fee: 70, notes: "Abonnement annuel", badgeNumber: "1005" },
-  { fullName: "Ines Jlassi", phone: "+21629334455", startOffset: -15, endOffset: 15, fee: 90 },
-  { fullName: "Hamza Khelifi", phone: "+21652778899", startOffset: -120, endOffset: -20, fee: 80, notes: "Inactif" },
-  { fullName: "Nour Belhaj", phone: "+21624556677", startOffset: -7, endOffset: 23, fee: 110 },
-  { fullName: "Oussama Riahi", phone: "+21627889900", startOffset: -45, endOffset: 6, fee: 95 },
-  { fullName: "Rania Saidi", phone: "+21653221144", startOffset: -3, endOffset: 60, fee: 130, notes: "Abonnement 3 mois" },
-  { fullName: "Bilel Hammami", phone: "+21625667788", startOffset: -200, endOffset: -60, fee: 80 },
-  { fullName: "Fatma Zouari", phone: "+21698112233", startOffset: -2, endOffset: 28, fee: 100 },
-  { fullName: "Slim Karoui", phone: "+21622990011", startOffset: -30, endOffset: 1, fee: 85, notes: "Expire demain" },
-  { fullName: "Emna Chedly", phone: "+21629445566", startOffset: -20, endOffset: 40, fee: 120 },
+  { fullName: "Ahmed Ben Ali", phone: "+21620123456", startOffset: -10, endOffset: 20, fee: 80, notes: "Abonnement 1 mois", badgeNumber: "1001", gender: "MALE" },
+  { fullName: "Sara Trabelsi", phone: "+21622111222", startOffset: -40, endOffset: -5, fee: 120, notes: "Renouvellement en attente", badgeNumber: "1002", gender: "FEMALE" },
+  { fullName: "Youssef Gharbi", phone: "+21698765432", startOffset: -5, endOffset: 3, fee: 100, badgeNumber: "1003", gender: "MALE" },
+  { fullName: "Mariem Bouazizi", phone: "+21655443322", startOffset: -60, endOffset: 30, fee: 150, notes: "Coaching personnel", badgeNumber: "1004", gender: "FEMALE" },
+  { fullName: "Khalil Mansour", phone: "+21621987654", startOffset: -90, endOffset: 90, fee: 70, notes: "Abonnement annuel", badgeNumber: "1005", gender: "MALE" },
+  { fullName: "Ines Jlassi", phone: "+21629334455", startOffset: -15, endOffset: 15, fee: 90, gender: "FEMALE" },
+  { fullName: "Hamza Khelifi", phone: "+21652778899", startOffset: -120, endOffset: -20, fee: 80, notes: "Inactif", gender: "MALE" },
+  { fullName: "Nour Belhaj", phone: "+21624556677", startOffset: -7, endOffset: 23, fee: 110, gender: "FEMALE" },
+  { fullName: "Oussama Riahi", phone: "+21627889900", startOffset: -45, endOffset: 6, fee: 95, gender: "MALE" },
+  { fullName: "Rania Saidi", phone: "+21653221144", startOffset: -3, endOffset: 60, fee: 130, notes: "Abonnement 3 mois", gender: "FEMALE" },
+  { fullName: "Bilel Hammami", phone: "+21625667788", startOffset: -200, endOffset: -60, fee: 80, gender: "MALE" },
+  { fullName: "Fatma Zouari", phone: "+21698112233", startOffset: -2, endOffset: 28, fee: 100, gender: "FEMALE" },
+  { fullName: "Slim Karoui", phone: "+21622990011", startOffset: -30, endOffset: 1, fee: 85, notes: "Expire demain", gender: "MALE" },
+  { fullName: "Emna Chedly", phone: "+21629445566", startOffset: -20, endOffset: 40, fee: 120, gender: "FEMALE" },
 ];
 
 function statusFor(endOffset: number): MemberStatus {
@@ -119,6 +120,7 @@ async function main() {
         monthlyFee: m.fee,
         notes: m.notes ?? null,
         badgeNumber: m.badgeNumber ?? null,
+        gender: m.gender,
       },
     });
     createdMembers.push({ id: created.id, endOffset: m.endOffset, index: createdMembers.length, fee: m.fee });

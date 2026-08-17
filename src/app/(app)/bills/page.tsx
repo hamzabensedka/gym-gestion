@@ -91,6 +91,7 @@ export default async function BillsPage({
     [UtilityType.WATER]: summary.byType[UtilityType.WATER],
     [UtilityType.ELECTRICITY]: summary.byType[UtilityType.ELECTRICITY],
     [UtilityType.GAS]: summary.byType[UtilityType.GAS],
+    [UtilityType.CUSTOM]: summary.byType[UtilityType.CUSTOM],
   };
 
   return (
