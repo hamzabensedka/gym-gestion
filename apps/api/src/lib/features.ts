@@ -36,3 +36,16 @@ export function requireGymFeature(feature: PlanFeature) {
     await next();
   };
 }
+
+export function requireMemberGymFeature(feature: PlanFeature) {
+  return async (c: Context, next: Next) => {
+    const member = c.get("member");
+    try {
+      await assertGymFeature(member.gymId, feature);
+    } catch (error) {
+      if (isFeatureLockedError(error)) return featureLockedResponse(c);
+      throw error;
+    }
+    await next();
+  };
+}

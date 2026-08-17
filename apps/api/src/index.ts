@@ -19,6 +19,7 @@ import {
 } from "./routes/app";
 import { billsRoutes } from "./routes/bills";
 import { drinksRoutes } from "./routes/drinks";
+import { classRoutes, sessionRoutes } from "./routes/classes";
 
 const app = new Hono();
 
@@ -38,6 +39,8 @@ app.route("/v1/payments", paymentsRoutes);
 app.route("/v1/access", accessRoutes);
 app.route("/v1/bills", billsRoutes);
 app.route("/v1/drinks", drinksRoutes);
+app.route("/v1/classes", classRoutes);
+app.route("/v1/sessions", sessionRoutes);
 app.route("/v1/desk", deskRoutes);
 app.route("/v1/dashboard", dashboardRoutes);
 app.route("/v1/attendance", attendanceRoutes);
