@@ -17,6 +17,7 @@ import {
   Tablet,
   Receipt,
   CupSoda,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
@@ -60,6 +61,12 @@ const drinksNavItem: NavItem = {
   icon: CupSoda,
 };
 
+const classesNavItem: NavItem = {
+  href: "/classes",
+  labelKey: "nav.classes",
+  icon: CalendarDays,
+};
+
 const adminNavBase: NavItem[] = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/members", labelKey: "nav.members", icon: Users },
@@ -83,6 +90,7 @@ function buildNav(
   showKioskNav: boolean,
   showBillsNav: boolean,
   showDrinksNav: boolean,
+  showClassesNav: boolean,
 ): NavItem[] {
   let base = role === Role.ADMIN ? adminNavBase : staffNavBase;
   if (showKioskNav) {
@@ -99,6 +107,12 @@ function buildNav(
     const staffIndex = base.findIndex((item) => item.href === "/staff");
     const insertAt = staffIndex >= 0 ? staffIndex : base.length;
     base = [...base.slice(0, insertAt), drinksNavItem, ...base.slice(insertAt)];
+  }
+  if (showClassesNav) {
+    const afterHref = role === Role.ADMIN ? "/attendance" : "/members";
+    const afterIndex = base.findIndex((item) => item.href === afterHref);
+    const insertAt = afterIndex >= 0 ? afterIndex + 1 : base.length;
+    base = [...base.slice(0, insertAt), classesNavItem, ...base.slice(insertAt)];
   }
   return base;
 }
@@ -195,6 +209,7 @@ export function AppShell({
   showKioskNav = false,
   showBillsNav = false,
   showDrinksNav = false,
+  showClassesNav = false,
   children,
 }: {
   userName: string;
@@ -203,6 +218,7 @@ export function AppShell({
   showKioskNav?: boolean;
   showBillsNav?: boolean;
   showDrinksNav?: boolean;
+  showClassesNav?: boolean;
   children: React.ReactNode;
 }) {
   const t = useT();
@@ -211,7 +227,7 @@ export function AppShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const [instantDismiss, setInstantDismiss] = useState(false);
 
-  const nav = buildNav(role, showKioskNav, showBillsNav, showDrinksNav);
+  const nav = buildNav(role, showKioskNav, showBillsNav, showDrinksNav, showClassesNav);
   const mobilePrimary = nav.slice(0, 4);
   const mobileMore = nav.slice(4);
   const showMoreMenu = mobileMore.length > 0;

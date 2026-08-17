@@ -46,6 +46,7 @@ export default async function AppLayout({
       showKioskNav={planHasFeature(plan, "kiosk")}
       showBillsNav={planHasFeature(plan, "utility_bills")}
       showDrinksNav={planHasFeature(plan, "drinks")}
+      showClassesNav={planHasFeature(plan, "class_booking")}
     >
       {children}
     </AppShell>
