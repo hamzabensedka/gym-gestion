@@ -11,6 +11,7 @@ export default function MemberLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="card" />
+      <Stack.Screen name="classes" />
     </Stack>
   );
 }
