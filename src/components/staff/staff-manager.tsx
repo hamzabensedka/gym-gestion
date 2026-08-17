@@ -7,7 +7,8 @@ import { UserPlus, Trash2, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input, Select, Field } from "@/components/ui/input";
+import { Input, Field } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useT } from "@/components/i18n/locale-provider";
 import { createStaffAction, deleteStaffAction } from "@/app/actions/staff";
@@ -122,10 +123,14 @@ export function StaffManager({
               <Input name="password" type="password" required minLength={6} />
             </Field>
             <Field label={t("staff.role")}>
-              <Select name="role" defaultValue={Role.STAFF}>
-                <option value={Role.STAFF}>{t("staff.roleStaff")}</option>
-                <option value={Role.ADMIN}>{t("staff.roleAdmin")}</option>
-              </Select>
+              <Select
+                name="role"
+                defaultValue={Role.STAFF}
+                options={[
+                  { value: Role.STAFF, label: t("staff.roleStaff") },
+                  { value: Role.ADMIN, label: t("staff.roleAdmin") },
+                ]}
+              />
             </Field>
           </div>
           {error ? (

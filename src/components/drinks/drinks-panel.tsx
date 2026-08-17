@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n/locale-provider";
 import { Card } from "@/components/ui/card";
-import { Field, Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { cn } from "@/lib/utils";
 import { ProductsSection } from "./products-section";
 import { SalesList } from "./sales-list";
@@ -45,12 +46,7 @@ export function DrinksPanel({
     <div className="space-y-5">
       <Card className="space-y-4 p-4">
         <Field label={t("drinks.month")}>
-          <Input
-            type="month"
-            name="month"
-            value={monthKey}
-            onChange={(event) => onMonthChange(event.target.value)}
-          />
+          <MonthPicker value={monthKey} onValueChange={onMonthChange} />
         </Field>
 
         <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-muted/40 p-1">

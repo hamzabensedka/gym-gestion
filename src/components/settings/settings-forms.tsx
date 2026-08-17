@@ -8,6 +8,7 @@ import { Building2, CreditCard, KeyRound, Languages, Check, FileText } from "luc
 import { Button } from "@/components/ui/button";
 import { Card, GroupedSection, GroupedRow } from "@/components/ui/card";
 import { Input, Field } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LegalFooter } from "@/components/legal/legal-footer";
 import { useT } from "@/components/i18n/locale-provider";
@@ -165,35 +166,29 @@ export function SettingsForms({
           data-lastpass-ignore=""
         >
           <Field label={t("settings.plan")}>
-            <select
+            <Select
               name="plan"
               value={plan}
-              onChange={(e) => onPlanChange(e.target.value as Plan)}
-              className="flex h-11 w-full rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              {PLANS.map((value) => (
-                <option key={value} value={value}>
-                  {t(PLAN_LABEL[value])}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => onPlanChange(value as Plan)}
+              options={PLANS.map((value) => ({
+                value,
+                label: t(PLAN_LABEL[value]),
+              }))}
+            />
           </Field>
           <p className="text-xs text-muted-foreground">
             {t("settings.maxStaffHint", { n: previewMaxStaff })}
           </p>
           <Field label={t("settings.accessMode")}>
-            <select
+            <Select
               name="accessMode"
               value={accessMode}
-              onChange={(e) => setAccessMode(e.target.value as AccessMode)}
-              className="flex h-11 w-full rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              {allowedModes.map((value) => (
-                <option key={value} value={value}>
-                  {t(MODE_LABEL[value])}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => setAccessMode(value as AccessMode)}
+              options={allowedModes.map((value) => ({
+                value,
+                label: t(MODE_LABEL[value]),
+              }))}
+            />
           </Field>
           {planError ? (
             <p
@@ -229,17 +224,14 @@ export function SettingsForms({
             <Input name="location" defaultValue={gymLocation} />
           </Field>
           <Field label={t("settings.cardTheme")}>
-            <select
+            <Select
               name="cardTheme"
               defaultValue={cardTheme || "default"}
-              className="flex h-11 w-full rounded-lg border border-border bg-input px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              {GYM_CARD_THEME_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.labelKey)}
-                </option>
-              ))}
-            </select>
+              options={GYM_CARD_THEME_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(option.labelKey),
+              }))}
+            />
           </Field>
           <p className="text-xs text-muted-foreground">{t("settings.cardThemeHint")}</p>
           {gymError ? (

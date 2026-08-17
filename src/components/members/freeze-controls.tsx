@@ -5,7 +5,8 @@ import { format } from "date-fns";
 import { Snowflake, Sun, Check } from "lucide-react";
 import { MemberStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { Input, Field } from "@/components/ui/input";
+import { Field } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useT } from "@/components/i18n/locale-provider";
 import { freezeMemberAction, unfreezeMemberAction } from "@/app/actions/members";
 import { formatDate } from "@/lib/format";
@@ -96,7 +97,12 @@ export function FreezeControls({
           className="space-y-3"
         >
           <Field label={t("freeze.untilOptional")} hint={t("freeze.untilHint")}>
-            <Input name="until" type="date" value={until} onChange={(e) => setUntil(e.target.value)} min={format(new Date(), "yyyy-MM-dd")} />
+            <DatePicker
+              name="until"
+              value={until}
+              onValueChange={setUntil}
+              min={format(new Date(), "yyyy-MM-dd")}
+            />
           </Field>
           <Button type="submit" variant="default" className="w-full" disabled={pending}>
             <Snowflake className="size-4" />

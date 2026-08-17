@@ -8,7 +8,9 @@ import { sellDrinkAction } from "@/app/actions/drinks";
 import { useT } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Field, Input, Textarea } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select } from "@/components/ui/select";
 import type { TranslationKey } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/format";
 import { paymentMethods } from "@/lib/validations";
@@ -69,15 +71,13 @@ export function SellForm({ products }: { products: DrinkProductRow[] }) {
             <Select
               name="productId"
               required
-              value={selected?.id ?? ""}
-              onChange={(event) => setSelectedId(event.target.value)}
-            >
-              {activeProducts.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name} ({product.stockQty}) — {formatCurrency(product.sellPrice)}
-                </option>
-              ))}
-            </Select>
+              value={selected?.id ?? activeProducts[0]?.id}
+              onValueChange={setSelectedId}
+              options={activeProducts.map((product) => ({
+                value: product.id,
+                label: `${product.name} (${product.stockQty}) — ${formatCurrency(product.sellPrice)}`,
+              }))}
+            />
           </Field>
           <Field label={t("drinks.quantity")}>
             <Input
@@ -92,16 +92,18 @@ export function SellForm({ products }: { products: DrinkProductRow[] }) {
             />
           </Field>
           <Field label={t("payments.method")}>
-            <Select name="method" required defaultValue="CASH">
-              {paymentMethods.map((method) => (
-                <option key={method} value={method}>
-                  {t(methodLabelKey[method])}
-                </option>
-              ))}
-            </Select>
+            <Select
+              name="method"
+              required
+              defaultValue="CASH"
+              options={paymentMethods.map((method) => ({
+                value: method,
+                label: t(methodLabelKey[method]),
+              }))}
+            />
           </Field>
           <Field label={t("drinks.soldAt")}>
-            <Input name="soldAt" type="date" required defaultValue={today} />
+            <DatePicker name="soldAt" required defaultValue={today} />
           </Field>
         </div>
         <Field label={t("drinks.note")}>
