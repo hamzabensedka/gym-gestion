@@ -36,6 +36,15 @@ describe("plans", () => {
     expect(planHasFeature(Plan.PRO, "drinks")).toBe(true);
   });
 
+  it("starter has no class_booking", () => {
+    expect(planHasFeature(Plan.STARTER, "class_booking")).toBe(false);
+  });
+
+  it("growth and pro have class_booking", () => {
+    expect(planHasFeature(Plan.GROWTH, "class_booking")).toBe(true);
+    expect(planHasFeature(Plan.PRO, "class_booking")).toBe(true);
+  });
+
   it("pro has badge + access export", () => {
     expect(planHasFeature(Plan.PRO, "badge_numbers")).toBe(true);
     expect(planHasFeature(Plan.PRO, "access_export")).toBe(true);
