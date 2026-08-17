@@ -61,6 +61,7 @@ export function ClassesPanel({
   const weekStart = startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 });
   const prevWeek = format(addDays(weekStart, -7), "yyyy-MM-dd");
   const nextWeek = format(addDays(weekStart, 7), "yyyy-MM-dd");
+  const activeClasses = classes.filter((klass) => klass.active);
 
   function goToWeek(value: string) {
     if (!value) return;
@@ -167,8 +168,8 @@ export function ClassesPanel({
           <input type="hidden" name="weekStart" value={weekKey} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("classes.name")}>
-              <Select name="classId" required defaultValue={classes[0]?.id ?? ""}>
-                {classes.map((klass) => (
+              <Select name="classId" required defaultValue={activeClasses[0]?.id ?? ""}>
+                {activeClasses.map((klass) => (
                   <option key={klass.id} value={klass.id}>
                     {klass.name}
                   </option>
@@ -266,8 +267,8 @@ export function ClassesPanel({
         <form ref={sessionRef} action={handleCreateSession} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("classes.name")}>
-              <Select name="classId" required defaultValue={classes[0]?.id ?? ""}>
-                {classes.map((klass) => (
+              <Select name="classId" required defaultValue={activeClasses[0]?.id ?? ""}>
+                {activeClasses.map((klass) => (
                   <option key={klass.id} value={klass.id}>
                     {klass.name}
                   </option>

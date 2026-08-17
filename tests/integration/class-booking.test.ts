@@ -8,6 +8,8 @@ import {
   cancelBooking,
   generateWeekSessions,
   updateSession,
+  createClass,
+  updateClass,
   deleteClass,
   deleteSession,
   cancelClassSession,
@@ -209,6 +211,31 @@ describe("class booking integration", () => {
       slots,
     });
     expect(second).toEqual({ created: 0, skipped: 1 });
+  });
+
+  it("generateWeekSessions rejects an inactive class with VALIDATION and creates 0", async () => {
+    const created = await createClass(prisma, {
+      gymId,
+      name: "Inactive Spin",
+      defaultCapacity: 8,
+    });
+    await updateClass(prisma, { gymId, classId: created.id, active: false });
+    const before = await prisma.classSession.count({
+      where: { gymId, classId: created.id },
+    });
+    await expectBookingCode(
+      generateWeekSessions(prisma, {
+        gymId,
+        classId: created.id,
+        weekStart: new Date("2026-09-14T00:00:00.000Z"),
+        slots: [{ weekday: 1, startMinutes: 10 * 60, endMinutes: 11 * 60 }],
+      }),
+      "VALIDATION",
+    );
+    const after = await prisma.classSession.count({
+      where: { gymId, classId: created.id },
+    });
+    expect(after - before).toBe(0);
   });
 
   it("updateSession rejects capacity below the current BOOKED count", async () => {

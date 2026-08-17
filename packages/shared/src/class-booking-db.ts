@@ -457,35 +457,49 @@ export async function updateSession(
     }
   }
 
-  if (input.capacity !== undefined) {
-    const capacity = assertCapacity(input.capacity);
-    const bookedCount = await db.booking.count({
-      where: { sessionId: input.sessionId, gymId: input.gymId, status: "BOOKED" },
-    });
-    if (capacity < bookedCount) {
-      throw new BookingError("CAPACITY_BELOW_BOOKINGS");
-    }
-  }
-
   const data: Prisma.ClassSessionUpdateManyMutationInput = {};
   if (input.startsAt !== undefined) data.startsAt = input.startsAt;
   if (input.endsAt !== undefined) data.endsAt = input.endsAt;
-  if (input.capacity !== undefined) data.capacity = assertCapacity(input.capacity);
+  const capacity = input.capacity !== undefined ? assertCapacity(input.capacity) : undefined;
+  if (capacity !== undefined) data.capacity = capacity;
   if (input.coachName !== undefined) data.coachName = assertCoachName(input.coachName);
   if (input.status === "SCHEDULED") data.status = "SCHEDULED";
 
-  try {
-    if (Object.keys(data).length > 0) {
-      await db.classSession.updateMany({
+  const writeSession = async (client: Prisma.TransactionClient | PrismaClient) => {
+    if (Object.keys(data).length === 0) {
+      return;
+    }
+    try {
+      await client.classSession.updateMany({
         where: { id: input.sessionId, gymId: input.gymId },
         data,
       });
+    } catch (error) {
+      if (isUniqueConflict(error)) {
+        throw new BookingError("VALIDATION");
+      }
+      throw error;
     }
-  } catch (error) {
-    if (isUniqueConflict(error)) {
-      throw new BookingError("VALIDATION");
-    }
-    throw error;
+  };
+
+  if (capacity !== undefined) {
+    await db.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`SELECT id FROM "ClassSession" WHERE id = ${input.sessionId} AND "gymId" = ${input.gymId} FOR UPDATE`,
+      );
+      if (locked.length === 0) {
+        throw new BookingError("NOT_FOUND");
+      }
+      const bookedCount = await tx.booking.count({
+        where: { sessionId: input.sessionId, gymId: input.gymId, status: "BOOKED" },
+      });
+      if (capacity < bookedCount) {
+        throw new BookingError("CAPACITY_BELOW_BOOKINGS");
+      }
+      await writeSession(tx);
+    });
+  } else {
+    await writeSession(db);
   }
 
   if (input.status === "CANCELLED") {
@@ -534,6 +548,9 @@ export async function generateWeekSessions(
   });
   if (!klass) {
     throw new BookingError("NOT_FOUND");
+  }
+  if (!klass.active) {
+    throw new BookingError("VALIDATION");
   }
   for (const slot of input.slots) {
     if (slot.endMinutes <= slot.startMinutes) {
