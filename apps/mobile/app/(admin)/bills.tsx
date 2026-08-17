@@ -38,13 +38,29 @@ type BillsData = {
   byType: Record<UtilityType, number>;
 };
 
-const UTILITY_TYPES = [UtilityType.WATER, UtilityType.ELECTRICITY, UtilityType.GAS] as const;
+const UTILITY_TYPES = [
+  UtilityType.WATER,
+  UtilityType.ELECTRICITY,
+  UtilityType.GAS,
+  UtilityType.CUSTOM,
+] as const;
 
 const TYPE_LABEL: Record<UtilityType, TranslationKey> = {
   [UtilityType.WATER]: "bills.type.WATER",
   [UtilityType.ELECTRICITY]: "bills.type.ELECTRICITY",
   [UtilityType.GAS]: "bills.type.GAS",
+  [UtilityType.CUSTOM]: "bills.type.CUSTOM",
 };
+
+function billTitle(
+  bill: BillRow,
+  t: (key: TranslationKey) => string,
+): string {
+  if (bill.type === UtilityType.CUSTOM) {
+    return bill.note?.trim() || t("bills.type.CUSTOM");
+  }
+  return t(TYPE_LABEL[bill.type]);
+}
 
 function currentMonthKey(): string {
   return format(new Date(), "yyyy-MM");
@@ -102,6 +118,7 @@ export default function BillsScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bills"] });
       setShowForm(false);
+      setType(UtilityType.WATER);
       setAmount("");
       setDueDate("");
       setNote("");
@@ -258,10 +275,27 @@ export default function BillsScreen() {
               placeholder="yyyy-MM-dd"
               autoCapitalize="none"
             />
-            <Input label={t("bills.note")} value={note} onChangeText={setNote} />
+            <Input
+              label={
+                type === UtilityType.CUSTOM ? t("bills.customName") : t("bills.note")
+              }
+              value={note}
+              onChangeText={setNote}
+              placeholder={
+                type === UtilityType.CUSTOM
+                  ? t("bills.customNamePlaceholder")
+                  : undefined
+              }
+            />
             <Button
               label={t("bills.create")}
-              onPress={() => create.mutate()}
+              onPress={() => {
+                if (type === UtilityType.CUSTOM && !note.trim()) {
+                  setErrorNotice(t("bills.customNameRequired"));
+                  return;
+                }
+                create.mutate();
+              }}
               loading={create.isPending}
             />
           </Card>
@@ -286,7 +320,7 @@ export default function BillsScreen() {
                   </View>
                   <View style={styles.billMeta}>
                     <View style={styles.billTitleRow}>
-                      <Text style={styles.billType}>{t(TYPE_LABEL[bill.type])}</Text>
+                      <Text style={styles.billType}>{billTitle(bill, t)}</Text>
                       <Badge label={paid ? t("bills.paid") : t("bills.unpaid")} tone={paid ? "success" : "neutral"} />
                     </View>
                     <Text style={styles.billAmount}>{formatCurrency(bill.amount)}</Text>
@@ -295,7 +329,9 @@ export default function BillsScreen() {
                         {t("bills.dueDate")}: {formatDate(bill.dueDate, locale)}
                       </Text>
                     ) : null}
-                    {bill.note ? <Text style={styles.billDetail}>{bill.note}</Text> : null}
+                    {bill.note && bill.type !== UtilityType.CUSTOM ? (
+                      <Text style={styles.billDetail}>{bill.note}</Text>
+                    ) : null}
                   </View>
                 </View>
                 <View style={styles.billActions}>

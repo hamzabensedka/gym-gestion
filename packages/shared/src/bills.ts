@@ -23,6 +23,7 @@ export function sumBillsForMonth(
     [UtilityType.WATER]: 0,
     [UtilityType.ELECTRICITY]: 0,
     [UtilityType.GAS]: 0,
+    [UtilityType.CUSTOM]: 0,
   };
 
   let total = 0;

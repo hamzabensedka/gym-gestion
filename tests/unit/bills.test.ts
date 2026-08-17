@@ -10,13 +10,15 @@ describe("sumBillsForMonth", () => {
         { type: UtilityType.WATER, amount: 40, periodMonth: month },
         { type: UtilityType.ELECTRICITY, amount: 120, periodMonth: month },
         { type: UtilityType.GAS, amount: 30, periodMonth: month },
+        { type: UtilityType.CUSTOM, amount: 10, periodMonth: month },
       ],
       month,
     );
-    expect(result.total).toBe(190);
+    expect(result.total).toBe(200);
     expect(result.byType.WATER).toBe(40);
     expect(result.byType.ELECTRICITY).toBe(120);
     expect(result.byType.GAS).toBe(30);
+    expect(result.byType.CUSTOM).toBe(10);
   });
 
   it("ignores bills from other months", () => {

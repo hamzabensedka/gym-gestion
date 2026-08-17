@@ -122,6 +122,10 @@ billsRoutes.post("/", async (c) => {
   const note =
     typeof noteRaw === "string" && noteRaw.trim() ? noteRaw.trim() : undefined;
 
+  if (typeRaw === UtilityType.CUSTOM && !note) {
+    return c.json({ error: { code: "VALIDATION", message: "Nom de la charge requis" } }, 422);
+  }
+
   const created = await prisma.utilityBill.create({
     data: {
       gymId: staff.gymId,
