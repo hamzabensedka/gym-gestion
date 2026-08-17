@@ -126,3 +126,5 @@ export function bookingErrorHttpStatus(code: BookingErrorCode): 403 | 404 | 409 
   if (code === "VALIDATION") return 422;
   return 409;
 }
+
+export { assertClassBookingEnabled, bookSession, cancelBooking } from "./class-booking-db";
