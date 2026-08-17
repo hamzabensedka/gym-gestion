@@ -59,6 +59,16 @@ enum UtilityType {
   GAS
 }
 
+enum ClassSessionStatus {
+  SCHEDULED
+  CANCELLED
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+}
+
 model Gym {
   id                    String     @id @default(cuid())
   name                  String
@@ -78,6 +88,9 @@ model Gym {
   utilityBills          UtilityBill[]
   drinkProducts         DrinkProduct[]
   drinkSales            DrinkSale[]
+  classes               Class[]
+  classSessions         ClassSession[]
+  bookings              Booking[]
 }
 
 model User {
@@ -122,6 +135,7 @@ model Member {
   updatedAt         DateTime     @updatedAt
   checkins          Checkin[]
   payments          Payment[]
+  bookings          Booking[]
 
   @@unique([gymId, phone])
   @@unique([gymId, email])
@@ -231,4 +245,57 @@ model DrinkSale {
   @@index([gymId, soldAt])
   @@index([productId, soldAt])
   @@index([recordedById])
+}
+
+model Class {
+  id              String         @id @default(cuid())
+  gymId           String
+  gym             Gym            @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name            String
+  defaultCapacity Int
+  active          Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  sessions        ClassSession[]
+
+  @@unique([gymId, name])
+  @@index([gymId, active])
+}
+
+model ClassSession {
+  id        String             @id @default(cuid())
+  gymId     String
+  gym       Gym                @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  classId   String
+  class     Class              @relation(fields: [classId], references: [id], onDelete: Restrict)
+  startsAt  DateTime
+  endsAt    DateTime
+  capacity  Int
+  coachName String?
+  status    ClassSessionStatus @default(SCHEDULED)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  bookings  Booking[]
+
+  @@unique([gymId, classId, startsAt])
+  @@index([gymId, startsAt])
+  @@index([gymId, classId, startsAt])
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  gymId       String
+  gym         Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  sessionId   String
+  session     ClassSession  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  memberId    String
+  member      Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status      BookingStatus @default(BOOKED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  cancelledAt DateTime?
+
+  @@unique([sessionId, memberId])
+  @@index([gymId, memberId, status])
+  @@index([sessionId, status])
 }

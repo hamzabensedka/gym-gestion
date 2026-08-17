@@ -45,6 +45,9 @@ function statusFor(endOffset: number): MemberStatus {
 }
 
 async function main() {
+  await prisma.booking.deleteMany();
+  await prisma.classSession.deleteMany();
+  await prisma.class.deleteMany();
   await prisma.checkin.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.member.deleteMany();
@@ -214,6 +217,39 @@ async function main() {
   });
 
   await prisma.payment.createMany({ data: paymentData });
+
+  const yoga = await prisma.class.create({
+    data: {
+      gymId: gym.id,
+      name: "Yoga",
+      defaultCapacity: 12,
+      active: true,
+    },
+  });
+
+  const sessionOneStart = setMinutes(setHours(addDays(now, 2), 10), 0);
+  const sessionTwoStart = setMinutes(setHours(addDays(now, 4), 18), 0);
+
+  await prisma.classSession.createMany({
+    data: [
+      {
+        gymId: gym.id,
+        classId: yoga.id,
+        startsAt: sessionOneStart,
+        endsAt: setMinutes(setHours(addDays(now, 2), 11), 0),
+        capacity: 12,
+        status: "SCHEDULED",
+      },
+      {
+        gymId: gym.id,
+        classId: yoga.id,
+        startsAt: sessionTwoStart,
+        endsAt: setMinutes(setHours(addDays(now, 4), 19), 0),
+        capacity: 12,
+        status: "SCHEDULED",
+      },
+    ],
+  });
 
   console.log(
     `Seeded gym "${gym.name}" with ${createdMembers.length} members, ${checkinData.length} check-ins, and ${paymentData.length} payments`,
