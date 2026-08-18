@@ -206,7 +206,7 @@ export function ClassesPanel({
           {!showRoster ? (
             <>
               {sessions.length > 0 || !adding ? (
-                <div className={cn(fillPlanning && "min-h-0 flex-1")}>
+                <div className={cn(fillPlanning && "flex min-h-0 flex-1 flex-col")}>
                   <WeekGrid
                     weekKey={weekKey}
                     sessions={sessions}
@@ -214,7 +214,7 @@ export function ClassesPanel({
                     emptyTitle={t("classes.noSessions")}
                     emptyDescription={t("classes.emptyWeekCta")}
                     fill={fillPlanning}
-                    className={fillPlanning ? "h-full" : undefined}
+                    className={fillPlanning ? "min-h-0 flex-1" : undefined}
                   />
                 </div>
               ) : null}
