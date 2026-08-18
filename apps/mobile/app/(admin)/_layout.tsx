@@ -48,6 +48,10 @@ export default function AdminLayout() {
           options={{ title: t("nav.staff"), href: null }}
         />
         <Tabs.Screen
+          name="abonnement"
+          options={{ title: t("nav.subscription"), href: null }}
+        />
+        <Tabs.Screen
           name="settings"
           options={{ title: t("nav.settings"), href: null }}
         />

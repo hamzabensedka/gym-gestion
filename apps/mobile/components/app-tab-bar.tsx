@@ -96,6 +96,10 @@ export function AppTabBar({ state, navigation, variant }: AppTabBarProps) {
       router.push("/kiosk");
       return;
     }
+    if (route === "abonnement") {
+      router.push("/(admin)/abonnement");
+      return;
+    }
     navigation.navigate(route);
   }
 

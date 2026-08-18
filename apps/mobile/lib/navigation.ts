@@ -24,6 +24,7 @@ const adminNavBase: NavItem[] = [
   { route: "bills", labelKey: "nav.bills", icon: "bills" },
   { route: "drinks", labelKey: "nav.drinks", icon: "drinks" },
   { route: "staff", labelKey: "nav.staff", icon: "staff" },
+  { route: "abonnement", labelKey: "nav.subscription", icon: "wallet" },
   { route: "settings", labelKey: "nav.settings", icon: "settings" },
 ];
 

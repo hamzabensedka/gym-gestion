@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -58,6 +59,15 @@ export default function LoginScreen() {
           <View style={styles.hero}>
             <Title>{t("login.title")}</Title>
             <Subtitle>{t("login.subtitle")}</Subtitle>
+            <Link href="/(auth)/offres" asChild>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={t("plans.seeOffers")}
+                style={({ pressed }) => [styles.offersLink, pressed && { opacity: 0.7 }]}
+              >
+                <Text style={styles.offersLinkText}>{t("plans.seeOffers")}</Text>
+              </Pressable>
+            </Link>
           </View>
 
           <Card>
@@ -127,6 +137,13 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   hero: { marginBottom: spacing.sm },
+  offersLink: { minHeight: 44, justifyContent: "center" },
+  offersLinkText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.foreground,
+    textDecorationLine: "underline",
+  },
   demoLabel: {
     fontSize: 12,
     color: colors.mutedForeground,
