@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { addDays, format, startOfWeek } from "date-fns";
 import { useT } from "@/components/i18n/locale-provider";
@@ -43,6 +43,10 @@ export function WeekGrid({
   className?: string;
 }) {
   const t = useT();
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
   const weekStart = startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 });
   const byId = useMemo(
     () => new Map(sessions.map((session) => [session.id, session])),
@@ -51,10 +55,10 @@ export function WeekGrid({
   const layout = useMemo(
     () =>
       buildWeekCalendar(sessions, {
-        now: new Date(),
+        now: now ?? undefined,
         weekStart: startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 }),
       }),
-    [sessions, weekKey],
+    [sessions, weekKey, now],
   );
   const itemsByDay = useMemo(() => {
     const map = new Map<number, typeof layout.items>();
@@ -185,7 +189,7 @@ export function WeekGrid({
                   {isToday && layout.nowTopPct != null ? (
                     <div
                       className="pointer-events-none absolute inset-x-0 z-20"
-                      style={{ top: `${layout.nowTopPct}%` }}
+                      style={{ top: `${Number(layout.nowTopPct.toFixed(3))}%` }}
                     >
                       <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-brand" />
                       <div className="h-px bg-brand" />

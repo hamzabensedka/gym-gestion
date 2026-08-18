@@ -32,15 +32,22 @@ export function MemberShell({
   const pathname = usePathname();
   const cardActive = pathname === "/member";
   const classesActive = pathname.startsWith("/member/classes");
+  const fillMain = classesActive;
 
   return (
     <div
       className={cn(
-        "flex h-dvh min-h-dvh flex-col overflow-hidden bg-black safe-top",
+        "safe-top min-h-dvh bg-black",
+        fillMain && "flex h-dvh flex-col overflow-hidden",
         !showClassesNav && "safe-bottom",
       )}
     >
-      <header className="flex shrink-0 items-center justify-between px-5 py-4">
+      <header
+        className={cn(
+          "flex items-center justify-between px-5 py-4",
+          fillMain && "shrink-0",
+        )}
+      >
         <div className="flex min-w-0 items-center gap-2.5">
           <Logo className="size-9" />
           <span className="truncate text-sm font-semibold text-balance text-foreground">
@@ -60,8 +67,9 @@ export function MemberShell({
       </header>
       <main
         className={cn(
-          "flex min-h-0 flex-1 flex-col px-5 pb-8",
+          "px-5 pb-8",
           showClassesNav && "pb-[calc(5.25rem+env(safe-area-inset-bottom))]",
+          fillMain && "flex min-h-0 flex-1 flex-col",
         )}
       >
         {children}
