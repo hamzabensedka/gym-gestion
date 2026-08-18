@@ -53,6 +53,17 @@ enum PlanStatus {
   CANCELLED
 }
 
+enum PlanRequestSource {
+  PUBLIC
+  GYM
+}
+
+enum PlanRequestStatus {
+  NEW
+  CONTACTED
+  DONE
+}
+
 enum UtilityType {
   WATER
   ELECTRICITY
@@ -92,6 +103,7 @@ model Gym {
   maxStaff              Int        @default(2)
   onboardingCompletedAt DateTime?
   lastAccessExportAt    DateTime?
+  planTrialEndsAt       DateTime?
   createdAt             DateTime   @default(now())
   users                 User[]
   members               Member[]
@@ -103,6 +115,24 @@ model Gym {
   classes               Class[]
   classSessions         ClassSession[]
   bookings              Booking[]
+  planRequests          PlanRequest[]
+}
+
+model PlanRequest {
+  id        String             @id @default(cuid())
+  source    PlanRequestSource
+  status    PlanRequestStatus  @default(NEW)
+  plan      Plan
+  gymName   String
+  city      String
+  phone     String
+  email     String
+  gymId     String?
+  gym       Gym?               @relation(fields: [gymId], references: [id], onDelete: SetNull)
+  createdAt DateTime           @default(now())
+
+  @@index([email, createdAt])
+  @@index([gymId])
 }
 
 model User {
