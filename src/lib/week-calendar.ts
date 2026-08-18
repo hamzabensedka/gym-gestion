@@ -7,6 +7,8 @@ export type WeekCalendarItem = {
   day: number;
   top: number;
   height: number;
+  topPct: number;
+  heightPct: number;
   leftPct: number;
   widthPct: number;
 };
@@ -18,6 +20,7 @@ export type WeekCalendarLayout = {
   height: number;
   items: WeekCalendarItem[];
   nowTop: number | null;
+  nowTopPct: number | null;
   todayIsoDay: number | null;
 };
 
@@ -68,6 +71,8 @@ function layoutGroup(events: InternalEvent[]): WeekCalendarItem[] {
       day: event.day,
       top: 0,
       height: 0,
+      topPct: 0,
+      heightPct: 0,
       leftPct: col * widthPct,
       widthPct,
     };
@@ -119,6 +124,7 @@ export function buildWeekCalendar(
   const endHour = Math.min(24, Math.ceil(maxMin / 60) + 1);
   const hourCount = Math.max(endHour - startHour, 1);
   const origin = startHour * 60;
+  const totalMin = hourCount * 60;
 
   const byDay = new Map<number, InternalEvent[]>();
   for (const event of events) {
@@ -136,12 +142,15 @@ export function buildWeekCalendar(
         ...item,
         top: ((event.startMin - origin) / 60) * HOUR_PX,
         height: ((event.endMin - event.startMin) / 60) * HOUR_PX,
+        topPct: ((event.startMin - origin) / totalMin) * 100,
+        heightPct: ((event.endMin - event.startMin) / totalMin) * 100,
       });
     }
   }
 
   const now = options?.now;
   let nowTop: number | null = null;
+  let nowTopPct: number | null = null;
   let todayIsoDay: number | null = null;
   if (now) {
     const weekStart = options?.weekStart;
@@ -154,6 +163,7 @@ export function buildWeekCalendar(
       const nowMin = minutesOfDay(now);
       if (nowMin >= origin && nowMin <= endHour * 60) {
         nowTop = ((nowMin - origin) / 60) * HOUR_PX;
+        nowTopPct = ((nowMin - origin) / totalMin) * 100;
       }
     }
   }
@@ -165,6 +175,7 @@ export function buildWeekCalendar(
     height: hourCount * HOUR_PX,
     items,
     nowTop,
+    nowTopPct,
     todayIsoDay,
   };
 }

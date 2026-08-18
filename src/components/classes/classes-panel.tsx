@@ -115,9 +115,16 @@ export function ClassesPanel({
     });
   }
 
+  const fillPlanning = tab === "planning" && !showRoster && !adding;
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/40 p-1">
+    <div
+      className={cn(
+        "flex flex-col gap-4",
+        fillPlanning && "min-h-0 flex-1",
+      )}
+    >
+      <div className="grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-border bg-muted/40 p-1">
         {(
           [
             ["planning", "classes.tab.planning"],
@@ -157,9 +164,9 @@ export function ClassesPanel({
       ) : null}
 
       {tab === "planning" ? (
-        <div className="space-y-4">
+        <div className={cn("flex flex-col gap-4", fillPlanning && "min-h-0 flex-1")}>
           {!showRoster ? (
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 type="button"
                 size="icon"
@@ -199,13 +206,17 @@ export function ClassesPanel({
           {!showRoster ? (
             <>
               {sessions.length > 0 || !adding ? (
-                <WeekGrid
-                  weekKey={weekKey}
-                  sessions={sessions}
-                  hrefFor={(id) => `/classes?week=${weekKey}&session=${id}`}
-                  emptyTitle={t("classes.noSessions")}
-                  emptyDescription={t("classes.emptyWeekCta")}
-                />
+                <div className={cn(fillPlanning && "min-h-0 flex-1")}>
+                  <WeekGrid
+                    weekKey={weekKey}
+                    sessions={sessions}
+                    hrefFor={(id) => `/classes?week=${weekKey}&session=${id}`}
+                    emptyTitle={t("classes.noSessions")}
+                    emptyDescription={t("classes.emptyWeekCta")}
+                    fill={fillPlanning}
+                    className={fillPlanning ? "h-full" : undefined}
+                  />
+                </div>
               ) : null}
 
               {adding ? (
@@ -296,7 +307,7 @@ export function ClassesPanel({
               ) : (
                 <Button
                   type="button"
-                  className="w-full min-h-12"
+                  className="min-h-12 w-full shrink-0"
                   onClick={() => {
                     if (activeClasses.length === 0) {
                       setTab("catalog");

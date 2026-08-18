@@ -142,7 +142,7 @@ export default async function ClassesPage({
       : null;
 
   return (
-    <StaggerGroup className="space-y-5">
+    <StaggerGroup className="flex min-h-0 flex-1 flex-col gap-5">
       <PageHeader title={t("classes.title")} subtitle={t("classes.subtitle")} />
       <ClassesPanel
         weekKey={weekKey}
