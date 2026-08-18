@@ -57,7 +57,7 @@ export default defineConfig({
       name: "guest",
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["setup"],
-      testMatch: [/auth\.spec/],
+      testMatch: [/auth\.spec/, /plans\.spec/],
     },
   ],
   webServer: {
