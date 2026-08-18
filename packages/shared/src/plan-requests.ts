@@ -138,10 +138,24 @@ function buildLeadHtml(fields: {
     .join("\n");
 }
 
-export async function createPlanRequest(
-  prisma: {
-    planRequest: { create: (args: unknown) => Promise<unknown> };
+export async function createPlanRequest<
+  TPrisma extends {
+    planRequest: {
+      create(args: {
+        data: {
+          source: "PUBLIC" | "GYM";
+          plan: Plan;
+          gymName: string;
+          city: string;
+          phone: string;
+          email: string;
+          gymId?: string;
+        };
+      }): Promise<unknown>;
+    };
   },
+>(
+  prisma: TPrisma,
   mailer: PlanRequestMailer,
   input: CreatePublicLead | CreateGymLead,
 ): Promise<{ ok: true } | { ok: false; error: string; status?: number }> {

@@ -27,8 +27,9 @@ import {
   modesAllowedForPlan,
   planHasFeature,
 } from "@gym/shared/plans";
-import { parsePlanAccessPatch } from "@gym/shared/plan-requests";
+import { createPlanRequest, parsePlanAccessPatch } from "@gym/shared/plan-requests";
 import { prisma } from "../db";
+import { sendPlanLeadEmail } from "../services/email";
 import { assertGymFeature, featureLockedResponse, isFeatureLockedError } from "../lib/features";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
 import { memberSessionRoutes } from "./classes";
@@ -728,6 +729,33 @@ settingsRoutes.patch("/plan-access", requireAdmin, async (c) => {
       maxStaff: updated.maxStaff,
     },
   });
+});
+
+settingsRoutes.post("/plan-requests", requireAdmin, async (c) => {
+  const staff = c.get("staff");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+
+  const gym = await prisma.gym.findUnique({
+    where: { id: staff.gymId },
+    select: { id: true, name: true, location: true, plan: true },
+  });
+  if (!gym) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
+  }
+
+  const result = await createPlanRequest(prisma, sendPlanLeadEmail, {
+    source: "GYM",
+    body,
+    gym,
+    adminEmail: staff.email,
+    adminPhone: "—",
+  });
+  if (!result.ok) {
+    const status = result.status === 429 ? 429 : 422;
+    const code = result.status === 429 ? "RATE_LIMITED" : "VALIDATION";
+    return c.json({ error: { code, message: result.error } }, status);
+  }
+  return c.json({ data: { ok: true } });
 });
 
 settingsRoutes.patch("/gym", requireAdmin, async (c) => {

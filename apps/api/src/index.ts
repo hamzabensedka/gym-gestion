@@ -20,6 +20,7 @@ import {
 import { billsRoutes } from "./routes/bills";
 import { drinksRoutes } from "./routes/drinks";
 import { classRoutes, sessionRoutes } from "./routes/classes";
+import { publicPlanRequestRoutes } from "./routes/plan-requests";
 
 const app = new Hono();
 
@@ -46,6 +47,7 @@ app.route("/v1/dashboard", dashboardRoutes);
 app.route("/v1/attendance", attendanceRoutes);
 app.route("/v1/staff", staffRoutes);
 app.route("/v1/settings", settingsRoutes);
+app.route("/v1/plan-requests", publicPlanRequestRoutes);
 app.route("/v1/member", memberAppRoutes);
 app.route("/v1", metaRoutes);
 
