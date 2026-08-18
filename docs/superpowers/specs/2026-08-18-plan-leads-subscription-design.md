@@ -77,7 +77,9 @@ A 4th card later = one more entry in the catalog array, not a new screen.
 
 Required: gym name, city, phone, email, chosen plan (the selected card fills `plan`).
 
-Optional WhatsApp: if `NEXT_PUBLIC_LEADS_WHATSAPP` is set (E.164, e.g. `216XXXXXXXX`), show a secondary button **Écrire sur WhatsApp** that opens `https://wa.me/{number}` with a prefilled message (gym name + plan). Hide the button if the env is empty.
+Optional WhatsApp: `NEXT_PUBLIC_LEADS_WHATSAPP` / `EXPO_PUBLIC_LEADS_WHATSAPP` = `330765683583` (no `+`). Show **Écrire sur WhatsApp** → `https://wa.me/330765683583` with a prefilled message (gym name + plan). Hide the button if the env is empty.
+
+v1 number is Hamza’s personal WhatsApp (`+33 07 65 68 35 83`). It **will be public** in the app bundle. That is acceptable for the first gyms; switch to a business number later if spam or hours become a problem.
 
 Rate-limit public POST (IP + email, e.g. 5 / hour).
 
@@ -114,13 +116,16 @@ No update UI. Status exists so a later operator screen can mark CONTACTED.
 
 ## Email
 
-- To: `LEADS_INBOX_EMAIL` (required in production; if missing, still persist the row and log).
-- From: existing `EMAIL_FROM` / Resend, same pattern as member invites (`src/lib/email.ts` + API equivalent).
+v1 inbox is Hamza’s personal Gmail. Typed as `gmai.com` in chat; **use `bensedkahamza@gmail.com`**. Confirm if that is wrong.
+
+- To: `LEADS_INBOX_EMAIL=bensedkahamza@gmail.com` — **server-only**, never `NEXT_PUBLIC_`.
+- From: existing `EMAIL_FROM` / Resend (same as member invites). Gmail cannot be the From address without a domain; Resend still sends *to* Gmail.
+- If `RESEND_API_KEY` is empty: persist the row + `console.info`, same as invites.
 - Subject public: `Nouveau lead {plan} — {gymName}`
 - Subject gym: `Demande {plan} — {gymName} ({gymId})`
 - Body: all form fields + source + timestamp.
 
-Dev without Resend: persist + `console.info`, same as invites.
+**Is personal Gmail a bad idea?** No for the first ~10 gyms. Do: a Gmail filter/label `Gym Gestion`. Don’t: commit the address in client code. Create a domain inbox later when volume or spam justifies it.
 
 ## Lock plan changes
 
