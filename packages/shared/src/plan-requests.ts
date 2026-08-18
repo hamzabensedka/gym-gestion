@@ -65,3 +65,126 @@ export function allowLeadAttempt(
   bucket.count += 1;
   return true;
 }
+
+export type PlanRequestMailer = (payload: {
+  subject: string;
+  html: string;
+}) => Promise<{ ok: true } | { ok: false; error: string }>;
+
+export type CreatePublicLead = {
+  source: "PUBLIC";
+  body: Record<string, unknown>;
+  rateLimitKey: string;
+};
+
+export type CreateGymLead = {
+  source: "GYM";
+  body: Record<string, unknown>;
+  gym: {
+    id: string;
+    name: string;
+    location: string | null;
+    plan: Plan;
+  };
+  adminEmail: string;
+  adminPhone?: string;
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function buildLeadHtml(fields: {
+  source: string;
+  plan: string;
+  gymName: string;
+  city: string;
+  phone: string;
+  email: string;
+  gymId?: string;
+}): string {
+  const rows: Array<[string, string]> = [
+    ["Source", fields.source],
+    ["Plan", fields.plan],
+    ["Gym", fields.gymName],
+    ["City", fields.city],
+    ["Phone", fields.phone],
+    ["Email", fields.email],
+  ];
+  if (fields.gymId) rows.push(["Gym ID", fields.gymId]);
+  rows.push(["Timestamp", new Date().toISOString()]);
+  return rows
+    .map(
+      ([label, value]) =>
+        `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`,
+    )
+    .join("\n");
+}
+
+export async function createPlanRequest(
+  prisma: {
+    planRequest: { create: (args: unknown) => Promise<unknown> };
+  },
+  mailer: PlanRequestMailer,
+  input: CreatePublicLead | CreateGymLead,
+): Promise<{ ok: true } | { ok: false; error: string; status?: number }> {
+  if (input.source === "PUBLIC") {
+    if (!allowLeadAttempt(input.rateLimitKey)) {
+      return { ok: false, error: "plans.rateLimited", status: 429 };
+    }
+    const parsed = parsePublicLeadInput(input.body);
+    if (!parsed.ok) return parsed;
+    const { plan, gymName, city, phone, email } = parsed;
+    await prisma.planRequest.create({
+      data: { source: "PUBLIC", plan, gymName, city, phone, email },
+    });
+    const mailed = await mailer({
+      subject: `Nouveau lead ${plan} — ${gymName}`,
+      html: buildLeadHtml({ source: "PUBLIC", plan, gymName, city, phone, email }),
+    });
+    if (!mailed.ok) {
+      console.error("[plan-request] Failed to send lead email:", mailed.error);
+    }
+    return { ok: true };
+  }
+
+  const parsed = parseGymPlanInput(input.body, input.gym.plan);
+  if (!parsed.ok) return parsed;
+  const { plan } = parsed;
+  const gymName = input.gym.name;
+  const city = input.gym.location ?? "—";
+  const phone = input.adminPhone ?? "—";
+  const email = input.adminEmail;
+  await prisma.planRequest.create({
+    data: {
+      source: "GYM",
+      plan,
+      gymId: input.gym.id,
+      gymName,
+      city,
+      phone,
+      email,
+    },
+  });
+  const mailed = await mailer({
+    subject: `Demande ${plan} — ${gymName} (${input.gym.id})`,
+    html: buildLeadHtml({
+      source: "GYM",
+      plan,
+      gymName,
+      city,
+      phone,
+      email,
+      gymId: input.gym.id,
+    }),
+  });
+  if (!mailed.ok) {
+    console.error("[plan-request] Failed to send lead email:", mailed.error);
+  }
+  return { ok: true };
+}

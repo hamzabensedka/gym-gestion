@@ -71,3 +71,36 @@ export async function sendMemberInviteEmail({
 
   return { ok: true as const };
 }
+
+export type SentPlanLeadEmail = {
+  to: string;
+  subject: string;
+  html: string;
+};
+
+let lastDevPlanLeadEmail: SentPlanLeadEmail | null = null;
+
+export function getLastDevPlanLeadEmail(): SentPlanLeadEmail | null {
+  return lastDevPlanLeadEmail;
+}
+
+export function clearLastDevPlanLeadEmail() {
+  lastDevPlanLeadEmail = null;
+}
+
+export async function sendPlanLeadEmail(input: { subject: string; html: string }) {
+  const to = process.env.LEADS_INBOX_EMAIL ?? "bensedkahamza@gmail.com";
+  if (!resend) {
+    lastDevPlanLeadEmail = { to, subject: input.subject, html: input.html };
+    console.info("[email:dev] Plan lead", { to, subject: input.subject });
+    return { ok: true as const, dev: true };
+  }
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
+    to,
+    subject: input.subject,
+    html: input.html,
+  });
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
