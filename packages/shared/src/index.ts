@@ -12,6 +12,8 @@ export * from "./peak-hours";
 export * from "./desk";
 export * from "./gym-features";
 export * from "./plans";
+export * from "./plan-catalog";
+export * from "./plan-requests";
 export * from "./bills";
 export * from "./drinks";
 export * from "./access-export";

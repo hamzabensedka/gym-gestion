@@ -20,6 +20,8 @@
     "./peak-hours": "./src/peak-hours.ts",
     "./gym-features": "./src/gym-features.ts",
     "./plans": "./src/plans.ts",
+    "./plan-catalog": "./src/plan-catalog.ts",
+    "./plan-requests": "./src/plan-requests.ts",
     "./bills": "./src/bills.ts",
     "./drinks": "./src/drinks.ts",
     "./access-export": "./src/access-export.ts",
