@@ -89,8 +89,10 @@ export default async function MemberClassesPage({
 
   return (
     <MemberShell title={t("classes.memberTitle")} showClassesNav>
-      <div className="space-y-4 pt-2">
-        <BackToCard label={t("common.back")} />
+      <div className="flex min-h-0 flex-1 flex-col gap-4 pt-2">
+        <div className="shrink-0">
+          <BackToCard label={t("common.back")} />
+        </div>
         <MemberClassesList
           weekKey={weekKey}
           selectedId={sessionParam ?? null}
