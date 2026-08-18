@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -45,6 +46,12 @@ export default function LoginPage() {
             {t("login.title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("login.subtitle")}</p>
+          <Link
+            href="/offres"
+            className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t("plans.seeOffers")}
+          </Link>
         </div>
 
         <Card>
