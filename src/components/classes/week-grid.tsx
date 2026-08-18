@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { addDays, format, startOfWeek } from "date-fns";
 import { useT } from "@/components/i18n/locale-provider";
@@ -43,6 +43,10 @@ export function WeekGrid({
   className?: string;
 }) {
   const t = useT();
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
   const weekStart = startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 });
   const byId = useMemo(
     () => new Map(sessions.map((session) => [session.id, session])),
@@ -51,10 +55,10 @@ export function WeekGrid({
   const layout = useMemo(
     () =>
       buildWeekCalendar(sessions, {
-        now: new Date(),
+        now: now ?? undefined,
         weekStart: startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 }),
       }),
-    [sessions, weekKey],
+    [sessions, weekKey, now],
   );
   const itemsByDay = useMemo(() => {
     const map = new Map<number, typeof layout.items>();
@@ -72,9 +76,11 @@ export function WeekGrid({
       <div
         className={cn(
           "rounded-xl border border-border bg-card px-5 py-10 text-center",
-          fill && "flex h-full min-h-48 flex-col items-center justify-center",
+          fill && "flex min-h-0 flex-1 flex-col items-center justify-center",
           className,
         )}
+        data-testid="week-grid"
+        data-fill={fill ? "true" : "false"}
       >
         <p className="text-sm font-medium text-foreground">
           {emptyTitle ?? t("classes.noSessions")}
@@ -92,9 +98,11 @@ export function WeekGrid({
     <div
       className={cn(
         "overflow-hidden rounded-xl border border-border bg-card",
-        fill && "flex h-full min-h-0 flex-col",
+        fill && "flex min-h-0 flex-1 flex-col",
         className,
       )}
+      data-testid="week-grid"
+      data-fill={fill ? "true" : "false"}
     >
       <div
         className={cn(
@@ -181,7 +189,7 @@ export function WeekGrid({
                   {isToday && layout.nowTopPct != null ? (
                     <div
                       className="pointer-events-none absolute inset-x-0 z-20"
-                      style={{ top: `${layout.nowTopPct}%` }}
+                      style={{ top: `${Number(layout.nowTopPct.toFixed(3))}%` }}
                     >
                       <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-brand" />
                       <div className="h-px bg-brand" />
