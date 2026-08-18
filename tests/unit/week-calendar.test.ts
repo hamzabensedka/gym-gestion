@@ -29,6 +29,8 @@ describe("buildWeekCalendar", () => {
       leftPct: 0,
       widthPct: 100,
     });
+    expect(layout.items[0].topPct).toBeCloseTo(100 / 3);
+    expect(layout.items[0].heightPct).toBeCloseTo(100 / 3);
     expect(layout.height).toBe(3 * HOUR_PX);
   });
 
@@ -73,6 +75,7 @@ describe("buildWeekCalendar", () => {
     );
 
     expect(layout.nowTop).toBe(HOUR_PX + HOUR_PX / 2);
+    expect(layout.nowTopPct).toBe(50);
     expect(layout.todayIsoDay).toBe(1);
   });
 });

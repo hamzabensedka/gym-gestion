@@ -6,7 +6,7 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { useT } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { HOUR_PX, buildWeekCalendar } from "@/lib/week-calendar";
+import { buildWeekCalendar } from "@/lib/week-calendar";
 import { WEEKDAYS, weekdayKey } from "./types";
 
 export type WeekGridSession = {
@@ -29,6 +29,8 @@ export function WeekGrid({
   selectedId,
   emptyTitle,
   emptyDescription,
+  fill = false,
+  className,
 }: {
   weekKey: string;
   sessions: WeekGridSession[];
@@ -37,6 +39,8 @@ export function WeekGrid({
   selectedId?: string | null;
   emptyTitle?: string;
   emptyDescription?: string;
+  fill?: boolean;
+  className?: string;
 }) {
   const t = useT();
   const weekStart = startOfWeek(new Date(`${weekKey}T00:00:00`), { weekStartsOn: 1 });
@@ -61,10 +65,17 @@ export function WeekGrid({
     }
     return map;
   }, [layout.items]);
+  const hourSpan = Math.max(layout.hours.length - 1, 1);
 
   if (sessions.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card px-5 py-10 text-center">
+      <div
+        className={cn(
+          "rounded-xl border border-border bg-card px-5 py-10 text-center",
+          fill && "flex h-full min-h-48 flex-col items-center justify-center",
+          className,
+        )}
+      >
         <p className="text-sm font-medium text-foreground">
           {emptyTitle ?? t("classes.noSessions")}
         </p>
@@ -78,10 +89,24 @@ export function WeekGrid({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="max-h-[min(70dvh,36rem)] overflow-auto">
-        <div className="min-w-[46rem]">
-          <div className="sticky top-0 z-20 grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-border bg-card/95">
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-border bg-card",
+        fill && "flex h-full min-h-0 flex-col",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "overflow-auto",
+          fill ? "min-h-0 flex-1" : "max-h-[min(70dvh,36rem)]",
+        )}
+      >
+        <div
+          className={cn("min-w-[46rem]", fill && "flex h-full flex-col")}
+          style={fill ? { minHeight: layout.height } : undefined}
+        >
+          <div className="sticky top-0 z-20 grid shrink-0 grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-border bg-card/95">
             <div />
             {WEEKDAYS.map((day) => {
               const date = addDays(weekStart, day - 1);
@@ -116,15 +141,18 @@ export function WeekGrid({
           </div>
 
           <div
-            className="grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))]"
-            style={{ height: layout.height }}
+            className={cn(
+              "grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))]",
+              fill && "min-h-0 flex-1",
+            )}
+            style={fill ? { minHeight: layout.height } : { height: layout.height }}
           >
             <div className="relative">
               {layout.hours.map((hour, index) => (
                 <p
                   key={hour}
                   className="absolute right-1.5 -translate-y-1/2 text-[10px] tabular-nums text-muted-foreground"
-                  style={{ top: index * HOUR_PX }}
+                  style={{ top: `${(index / hourSpan) * 100}%` }}
                 >
                   {String(hour).padStart(2, "0")}:00
                 </p>
@@ -146,14 +174,14 @@ export function WeekGrid({
                     <div
                       key={hour}
                       className="absolute inset-x-0 border-t border-border/70"
-                      style={{ top: index * HOUR_PX }}
+                      style={{ top: `${(index / hourSpan) * 100}%` }}
                     />
                   ))}
 
-                  {isToday && layout.nowTop != null ? (
+                  {isToday && layout.nowTopPct != null ? (
                     <div
                       className="pointer-events-none absolute inset-x-0 z-20"
-                      style={{ top: layout.nowTop }}
+                      style={{ top: `${layout.nowTopPct}%` }}
                     >
                       <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-brand" />
                       <div className="h-px bg-brand" />
@@ -168,8 +196,8 @@ export function WeekGrid({
                     const showDetails = item.height >= 48;
                     const selected = selectedId === session.id;
                     const style: CSSProperties = {
-                      top: item.top + 2,
-                      height: Math.max(item.height - 4, 28),
+                      top: `calc(${item.topPct}% + 2px)`,
+                      height: `max(28px, calc(${item.heightPct}% - 4px))`,
                       left: `calc(${item.leftPct}% + 3px)`,
                       width: `calc(${item.widthPct}% - 6px)`,
                     };

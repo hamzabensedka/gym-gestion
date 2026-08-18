@@ -289,13 +289,13 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <MobileHeader gymName={gymName} userName={userName} roleLabel={roleLabel} />
 
         <main
           className={cn(
             "mx-auto w-full flex-1 px-4 py-5 pb-28 lg:px-8 lg:py-8",
-            pathname === "/classes" ? "max-w-6xl" : "max-w-3xl",
+            pathname === "/classes" ? "flex min-h-0 max-w-6xl flex-col" : "max-w-3xl",
           )}
         >
           {children}
