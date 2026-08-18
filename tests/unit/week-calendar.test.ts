@@ -78,4 +78,14 @@ describe("buildWeekCalendar", () => {
     expect(layout.nowTopPct).toBe(50);
     expect(layout.todayIsoDay).toBe(1);
   });
+
+  it("omits the now marker when now is not provided", () => {
+    const layout = buildWeekCalendar([
+      session("a", new Date(2026, 7, 17, 18, 0, 0), new Date(2026, 7, 17, 19, 0, 0)),
+    ]);
+
+    expect(layout.nowTop).toBeNull();
+    expect(layout.nowTopPct).toBeNull();
+    expect(layout.todayIsoDay).toBeNull();
+  });
 });
