@@ -34,8 +34,13 @@ export function MemberShell({
   const classesActive = pathname.startsWith("/member/classes");
 
   return (
-    <div className={cn("safe-top min-h-dvh bg-black", !showClassesNav && "safe-bottom")}>
-      <header className="flex items-center justify-between px-5 py-4">
+    <div
+      className={cn(
+        "flex h-dvh min-h-dvh flex-col overflow-hidden bg-black safe-top",
+        !showClassesNav && "safe-bottom",
+      )}
+    >
+      <header className="flex shrink-0 items-center justify-between px-5 py-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <Logo className="size-9" />
           <span className="truncate text-sm font-semibold text-balance text-foreground">
@@ -55,7 +60,7 @@ export function MemberShell({
       </header>
       <main
         className={cn(
-          "px-5 pb-8",
+          "flex min-h-0 flex-1 flex-col px-5 pb-8",
           showClassesNav && "pb-[calc(5.25rem+env(safe-area-inset-bottom))]",
         )}
       >

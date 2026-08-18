@@ -72,9 +72,11 @@ export function WeekGrid({
       <div
         className={cn(
           "rounded-xl border border-border bg-card px-5 py-10 text-center",
-          fill && "flex h-full min-h-48 flex-col items-center justify-center",
+          fill && "flex min-h-0 flex-1 flex-col items-center justify-center",
           className,
         )}
+        data-testid="week-grid"
+        data-fill={fill ? "true" : "false"}
       >
         <p className="text-sm font-medium text-foreground">
           {emptyTitle ?? t("classes.noSessions")}
@@ -92,9 +94,11 @@ export function WeekGrid({
     <div
       className={cn(
         "overflow-hidden rounded-xl border border-border bg-card",
-        fill && "flex h-full min-h-0 flex-col",
+        fill && "flex min-h-0 flex-1 flex-col",
         className,
       )}
+      data-testid="week-grid"
+      data-fill={fill ? "true" : "false"}
     >
       <div
         className={cn(

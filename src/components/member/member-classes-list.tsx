@@ -79,8 +79,8 @@ export function MemberClassesList({
   const canBook = selected != null && !booked && !full;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex shrink-0 items-center gap-2">
         <Button
           type="button"
           size="icon"
@@ -112,26 +112,30 @@ export function MemberClassesList({
         </p>
       ) : null}
 
-      <WeekGrid
-        weekKey={weekKey}
-        sessions={sessions.map((session) => ({
-          id: session.id,
-          className: session.className,
-          startsAt: session.startsAt,
-          endsAt: session.endsAt,
-          remaining: session.remaining,
-          coachName: session.coachName,
-          booked: session.myBooking === "BOOKED",
-          audience: session.audience,
-        }))}
-        onSelect={selectSession}
-        selectedId={selected?.id ?? null}
-        emptyTitle={t("classes.noSessions")}
-        emptyDescription={t("classes.memberEmpty")}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <WeekGrid
+          weekKey={weekKey}
+          sessions={sessions.map((session) => ({
+            id: session.id,
+            className: session.className,
+            startsAt: session.startsAt,
+            endsAt: session.endsAt,
+            remaining: session.remaining,
+            coachName: session.coachName,
+            booked: session.myBooking === "BOOKED",
+            audience: session.audience,
+          }))}
+          onSelect={selectSession}
+          selectedId={selected?.id ?? null}
+          emptyTitle={t("classes.noSessions")}
+          emptyDescription={t("classes.memberEmpty")}
+          fill
+          className="min-h-0 flex-1"
+        />
+      </div>
 
       {selected ? (
-        <article className="space-y-3 rounded-[22px] border border-white/12 bg-[#0a0a0a] p-4">
+        <article className="shrink-0 space-y-3 rounded-[22px] border border-white/12 bg-[#0a0a0a] p-4">
           <div className="space-y-1">
             <h2 className="text-balance text-base font-semibold text-foreground">
               {selected.className}
@@ -192,7 +196,7 @@ export function MemberClassesList({
           )}
         </article>
       ) : sessions.length > 0 ? (
-        <p className="text-pretty text-center text-sm text-muted-foreground">
+        <p className="shrink-0 text-pretty text-center text-sm text-muted-foreground">
           {t("classes.memberPickSession")}
         </p>
       ) : null}
