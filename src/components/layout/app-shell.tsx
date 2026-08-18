@@ -18,6 +18,7 @@ import {
   Receipt,
   CupSoda,
   CalendarDays,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
@@ -67,6 +68,12 @@ const classesNavItem: NavItem = {
   icon: CalendarDays,
 };
 
+const subscriptionNavItem: NavItem = {
+  href: "/abonnement",
+  labelKey: "nav.subscription",
+  icon: CreditCard,
+};
+
 const adminNavBase: NavItem[] = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/members", labelKey: "nav.members", icon: Users },
@@ -74,6 +81,7 @@ const adminNavBase: NavItem[] = [
   { href: "/attendance", labelKey: "nav.attendance", icon: CalendarCheck },
   { href: "/manual", labelKey: "nav.manual", icon: Search },
   { href: "/staff", labelKey: "nav.staff", icon: UserCog },
+  subscriptionNavItem,
   { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
