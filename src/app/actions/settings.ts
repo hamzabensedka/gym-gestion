@@ -1,16 +1,13 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { AccessMode, Plan, Role } from "@prisma/client";
+import { AccessMode, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { getPlanLimits, modesAllowedForPlan } from "@/lib/plans";
+import { modesAllowedForPlan } from "@/lib/plans";
+import { parsePlanAccessPatch } from "@gym/shared/plan-requests";
 import { requireSession, refreshSession } from "@/lib/session";
 import { gymSchema, passwordSchema } from "@/lib/validations";
-
-function isPlan(value: unknown): value is Plan {
-  return typeof value === "string" && Object.values(Plan).includes(value as Plan);
-}
 
 function isAccessMode(value: unknown): value is AccessMode {
   return (
@@ -55,69 +52,37 @@ export async function updatePlanAndAccessAction(formData: FormData) {
   const session = await requireSession();
   if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
 
-  const planRaw = formData.get("plan");
-  if (!isPlan(planRaw)) {
-    return { error: "settings.invalidPlan" };
-  }
-
-  const modeRaw = formData.get("accessMode");
-  if (!isAccessMode(modeRaw)) {
-    return { error: "settings.invalidAccessMode" };
-  }
-
-  const maxStaff = getPlanLimits(planRaw).maxStaff;
-  const allowed = modesAllowedForPlan(planRaw);
-  const accessMode = allowed.includes(modeRaw) ? modeRaw : AccessMode.DESK_ONLY;
-
-  await prisma.gym.update({
-    where: { id: session.gymId },
-    data: {
-      plan: planRaw,
-      maxStaff,
-      accessMode,
-    },
+  const parsed = parsePlanAccessPatch({
+    accessMode: formData.get("accessMode"),
   });
-
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
-  revalidatePath("/staff");
-  return { ok: true, plan: planRaw, accessMode, maxStaff };
-}
-
-export async function updatePlanAction(formData: FormData) {
-  const session = await requireSession();
-  if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
-
-  const planRaw = formData.get("plan");
-  if (!isPlan(planRaw)) {
-    return { error: "settings.invalidPlan" };
-  }
+  if (!parsed.ok) return { error: parsed.error };
 
   const gym = await prisma.gym.findUnique({
     where: { id: session.gymId },
-    select: { accessMode: true },
+    select: { plan: true },
   });
   if (!gym) return { error: "Non autorisé" };
 
-  const maxStaff = getPlanLimits(planRaw).maxStaff;
-  const allowed = modesAllowedForPlan(planRaw);
-  const accessMode = allowed.includes(gym.accessMode)
-    ? gym.accessMode
+  const allowed = modesAllowedForPlan(gym.plan);
+  const accessMode = allowed.includes(parsed.accessMode)
+    ? parsed.accessMode
     : AccessMode.DESK_ONLY;
 
   await prisma.gym.update({
     where: { id: session.gymId },
-    data: {
-      plan: planRaw,
-      maxStaff,
-      accessMode,
-    },
+    data: { accessMode },
   });
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
   revalidatePath("/staff");
-  return { ok: true, plan: planRaw, accessMode, maxStaff };
+  return { ok: true, accessMode };
+}
+
+export async function updatePlanAction(_formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
+  return { error: "settings.planLocked" };
 }
 
 export async function updateAccessModeAction(formData: FormData) {

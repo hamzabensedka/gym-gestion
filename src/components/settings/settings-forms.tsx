@@ -21,8 +21,6 @@ import type { TranslationKey } from "@/lib/i18n";
 import { GYM_CARD_THEME_OPTIONS } from "@/lib/gym-card-themes";
 import { getPlanLimits, modesAllowedForPlan } from "@/lib/plans";
 
-const PLANS = Object.values(Plan);
-
 const PLAN_LABEL: Record<Plan, TranslationKey> = {
   STARTER: "onboarding.plan.STARTER",
   GROWTH: "onboarding.plan.GROWTH",
@@ -88,11 +86,6 @@ export function SettingsForms({
   const allowedModes = useMemo(() => modesAllowedForPlan(plan), [plan]);
   const previewMaxStaff = getPlanLimits(plan).maxStaff;
 
-  function onPlanChange(next: Plan) {
-    setPlan(next);
-    setAccessMode((current) => clampMode(next, current));
-  }
-
   function saveGym(formData: FormData) {
     setGymError(null);
     setGymSaved(false);
@@ -126,7 +119,6 @@ export function SettingsForms({
     setPlanError(null);
     setPlanSaved(false);
     const formData = new FormData();
-    formData.set("plan", plan);
     formData.set("accessMode", accessMode);
     startTransition(async () => {
       const result = await updatePlanAndAccessAction(formData);
@@ -166,15 +158,10 @@ export function SettingsForms({
           data-lastpass-ignore=""
         >
           <Field label={t("settings.plan")}>
-            <Select
-              name="plan"
-              value={plan}
-              onValueChange={(value) => onPlanChange(value as Plan)}
-              options={PLANS.map((value) => ({
-                value,
-                label: t(PLAN_LABEL[value]),
-              }))}
-            />
+            <p className="text-[17px] font-medium">{t(PLAN_LABEL[plan])}</p>
+            <Link href="/abonnement" className="text-sm font-medium text-brand hover:underline">
+              {t("nav.subscription")}
+            </Link>
           </Field>
           <p className="text-xs text-muted-foreground">
             {t("settings.maxStaffHint", { n: previewMaxStaff })}

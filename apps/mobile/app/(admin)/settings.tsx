@@ -28,8 +28,6 @@ type SettingsSnapshot = {
   maxStaff: number;
 };
 
-const PLANS: Plan[] = ["STARTER", "GROWTH", "PRO"];
-
 const PLAN_LABEL: Record<Plan, TranslationKey> = {
   STARTER: "onboarding.plan.STARTER",
   GROWTH: "onboarding.plan.GROWTH",
@@ -100,11 +98,6 @@ export default function SettingsScreen() {
   const allowedModes = modesAllowedForPlan(plan);
   const previewMaxStaff = getPlanLimits(plan).maxStaff;
 
-  function onPlanChange(next: Plan) {
-    setPlan(next);
-    setAccessMode((current) => clampMode(next, current));
-  }
-
   const saveGym = useMutation({
     mutationFn: () =>
       apiFetch("/settings/gym", {
@@ -128,7 +121,7 @@ export default function SettingsScreen() {
     mutationFn: () =>
       apiFetch("/settings/plan-access", {
         method: "PATCH",
-        body: JSON.stringify({ plan, accessMode }),
+        body: JSON.stringify({ accessMode }),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["settings"] });
@@ -187,17 +180,7 @@ export default function SettingsScreen() {
         ) : (
           <>
             <Text style={styles.fieldLabel}>{t("settings.plan")}</Text>
-            <View style={styles.row}>
-              {PLANS.map((value) => (
-                <Button
-                  key={value}
-                  label={t(PLAN_LABEL[value])}
-                  variant={plan === value ? "primary" : "secondary"}
-                  onPress={() => onPlanChange(value)}
-                  disabled={!settingsReady}
-                />
-              ))}
-            </View>
+            <Text style={styles.planValue}>{t(PLAN_LABEL[plan])}</Text>
             <Text style={styles.hint}>{t("settings.maxStaffHint", { n: previewMaxStaff })}</Text>
 
             <Text style={styles.fieldLabel}>{t("settings.accessMode")}</Text>
@@ -314,6 +297,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: "500",
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  planValue: {
+    fontSize: 16,
+    fontWeight: "600",
     color: colors.text,
     marginBottom: spacing.sm,
   },

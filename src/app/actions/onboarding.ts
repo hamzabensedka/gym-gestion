@@ -1,11 +1,10 @@
 "use server";
 
-import { AccessMode, Plan, Role } from "@prisma/client";
+import { AccessMode, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import {
-  getPlanLimits,
   modesAllowedForPlan,
   suggestFromEntryAnswer,
   type EntryAnswer,
@@ -25,23 +24,6 @@ function isEntryAnswer(value: unknown): value is EntryAnswer {
   return typeof value === "string" && ENTRY_ANSWERS.includes(value as EntryAnswer);
 }
 
-function isPlan(value: unknown): value is Plan {
-  return typeof value === "string" && Object.values(Plan).includes(value as Plan);
-}
-
-function resolvePlanAndMode(
-  entryAnswer: EntryAnswer,
-  planOverride?: Plan,
-): { plan: Plan; accessMode: AccessMode } {
-  const suggested = suggestFromEntryAnswer(entryAnswer);
-  const plan = planOverride ?? suggested.plan;
-  let accessMode = suggested.accessMode;
-  if (!modesAllowedForPlan(plan).includes(accessMode)) {
-    accessMode = AccessMode.DESK_ONLY;
-  }
-  return { plan, accessMode };
-}
-
 export async function completeOnboardingAction(formData: FormData) {
   const session = await requireSession();
   if (session.role !== Role.ADMIN) return { error: "Non autorisé" };
@@ -49,17 +31,6 @@ export async function completeOnboardingAction(formData: FormData) {
   const entryRaw = formData.get("entryAnswer");
   if (!isEntryAnswer(entryRaw)) {
     return { error: "onboarding.invalidEntry" };
-  }
-
-  const planRaw = formData.get("plan");
-  const planOverride =
-    planRaw && String(planRaw).trim() !== ""
-      ? isPlan(planRaw)
-        ? planRaw
-        : null
-      : undefined;
-  if (planOverride === null) {
-    return { error: "onboarding.invalidPlan" };
   }
 
   const parsedGym = gymSchema.safeParse({
@@ -70,17 +41,25 @@ export async function completeOnboardingAction(formData: FormData) {
     return { error: parsedGym.error.issues[0]?.message ?? "Données invalides" };
   }
 
-  const { plan, accessMode } = resolvePlanAndMode(entryRaw, planOverride);
-  const maxStaff = getPlanLimits(plan).maxStaff;
+  const gym = await prisma.gym.findUnique({
+    where: { id: session.gymId },
+    select: { plan: true },
+  });
+  if (!gym) return { error: "Non autorisé" };
+
+  const suggested = suggestFromEntryAnswer(entryRaw);
+  const allowed = modesAllowedForPlan(gym.plan);
+  const accessMode = allowed.includes(suggested.accessMode)
+    ? suggested.accessMode
+    : AccessMode.DESK_ONLY;
+
   const name = parsedGym.data.name.trim();
   const location = parsedGym.data.location?.trim() || null;
 
   await prisma.gym.update({
     where: { id: session.gymId },
     data: {
-      plan,
       accessMode,
-      maxStaff,
       name,
       location,
       onboardingCompletedAt: new Date(),

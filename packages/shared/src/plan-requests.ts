@@ -1,5 +1,5 @@
-import { Plan } from "@prisma/client";
-import { isPlan } from "./plans";
+import { AccessMode, Plan } from "@prisma/client";
+import { isAccessMode, isPlan } from "./plans";
 
 export type PublicLeadInput = {
   gymName: string;
@@ -48,6 +48,18 @@ export function parseGymPlanInput(
     return { ok: false, error: "plans.alreadyCurrent" };
   }
   return { ok: true, plan: body.plan };
+}
+
+export function parsePlanAccessPatch(
+  body: Record<string, unknown>,
+): ({ ok: true; accessMode: AccessMode }) | ParseFail {
+  if ("plan" in body && body.plan !== undefined) {
+    return { ok: false, error: "settings.planLocked" };
+  }
+  if (!isAccessMode(body.accessMode)) {
+    return { ok: false, error: "settings.invalidAccessMode" };
+  }
+  return { ok: true, accessMode: body.accessMode };
 }
 
 export function allowLeadAttempt(

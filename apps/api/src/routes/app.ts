@@ -24,11 +24,10 @@ import { buildAccessExportCsv } from "@gym/shared/access-export";
 import { normalizeBadgeNumber } from "@gym/shared/badge";
 import {
   getPlanLimits,
-  isAccessMode,
-  isPlan,
   modesAllowedForPlan,
   planHasFeature,
 } from "@gym/shared/plans";
+import { parsePlanAccessPatch } from "@gym/shared/plan-requests";
 import { prisma } from "../db";
 import { assertGymFeature, featureLockedResponse, isFeatureLockedError } from "../lib/features";
 import { requireAdmin, requireCheckinAccess, requireDeskAccess, requireMember, requireStaff } from "../middleware/auth";
@@ -660,6 +659,7 @@ settingsRoutes.get("/", requireDeskAccess, async (c) => {
       plan: true,
       accessMode: true,
       planStatus: true,
+      planTrialEndsAt: true,
       maxStaff: true,
       cardTheme: true,
       onboardingCompletedAt: true,
@@ -676,6 +676,7 @@ settingsRoutes.get("/", requireDeskAccess, async (c) => {
       plan: gym.plan,
       accessMode: gym.accessMode,
       planStatus: gym.planStatus,
+      planTrialEndsAt: gym.planTrialEndsAt?.toISOString() ?? null,
       maxStaff: gym.maxStaff,
       features: limits.features,
       cardTheme: gym.cardTheme ?? "default",
@@ -696,25 +697,36 @@ settingsRoutes.get("/gym", requireAdmin, async (c) => {
 
 settingsRoutes.patch("/plan-access", requireAdmin, async (c) => {
   const staff = c.get("staff");
-  const body = await c.req.json<{ plan?: unknown; accessMode?: unknown }>();
-  const plan = body.plan;
-  const modeRaw = body.accessMode;
-  if (!isPlan(plan)) {
-    return c.json({ error: { code: "VALIDATION", message: "settings.invalidPlan" } }, 422);
+  const body = (await c.req.json()) as Record<string, unknown>;
+  const parsed = parsePlanAccessPatch(body);
+  if (!parsed.ok) {
+    const status = parsed.error === "settings.planLocked" ? 400 : 422;
+    return c.json({ error: { code: "VALIDATION", message: parsed.error } }, status);
   }
-  if (!isAccessMode(modeRaw)) {
-    return c.json({ error: { code: "VALIDATION", message: "settings.invalidAccessMode" } }, 422);
-  }
-  const maxStaff = getPlanLimits(plan).maxStaff;
-  const allowed = modesAllowedForPlan(plan);
-  const accessMode = allowed.includes(modeRaw) ? modeRaw : AccessMode.DESK_ONLY;
 
-  const gym = await prisma.gym.update({
+  const gym = await prisma.gym.findUnique({
     where: { id: staff.gymId },
-    data: { plan, maxStaff, accessMode },
+    select: { plan: true },
+  });
+  if (!gym) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Salle introuvable" } }, 404);
+  }
+
+  const allowed = modesAllowedForPlan(gym.plan);
+  const accessMode = allowed.includes(parsed.accessMode)
+    ? parsed.accessMode
+    : AccessMode.DESK_ONLY;
+
+  const updated = await prisma.gym.update({
+    where: { id: staff.gymId },
+    data: { accessMode },
   });
   return c.json({
-    data: { plan: gym.plan, accessMode: gym.accessMode, maxStaff: gym.maxStaff },
+    data: {
+      plan: updated.plan,
+      accessMode: updated.accessMode,
+      maxStaff: updated.maxStaff,
+    },
   });
 });
 
